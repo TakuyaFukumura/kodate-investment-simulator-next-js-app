@@ -35,7 +35,7 @@ export default function Header() {
                 <div className="flex justify-between items-center h-16">
                     <div className="flex items-center">
                         <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-                            kodate-investment-simulator-next-js-app
+                            戸建て投資シミュレータ
                         </h1>
                     </div>
 

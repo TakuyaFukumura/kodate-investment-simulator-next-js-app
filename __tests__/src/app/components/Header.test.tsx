@@ -44,7 +44,7 @@ describe('Header', () => {
         it('ヘッダータイトルが表示される', () => {
             renderWithProvider();
 
-            expect(screen.getByText('kodate-investment-simulator-next-js-app')).toBeInTheDocument();
+            expect(screen.getByText('戸建て投資シミュレータ')).toBeInTheDocument();
         });
 
         it('ヘッダーのHTML構造が正しい', () => {
