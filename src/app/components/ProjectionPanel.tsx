@@ -10,6 +10,7 @@ import type {
     ProjectionAssumptions,
     ProjectionValidationError,
 } from '../../lib/projection';
+import ExitPanel from './ExitPanel';
 import ProjectionCharts from './ProjectionCharts';
 
 type RepairEventValues = {
@@ -83,10 +84,11 @@ export default function ProjectionPanel({baseInput, baseInputIsValid}: Projectio
     const finalProjection = projections ? projections[projections.length - 1] : null;
 
     return (
-        <section
-            aria-labelledby="projection-heading"
-            className="space-y-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6"
-        >
+        <>
+            <section
+                aria-labelledby="projection-heading"
+                className="space-y-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6"
+            >
             <div>
                 <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">購入後の長期予測</p>
                 <h2 id="projection-heading" className="mt-1 text-xl font-bold">運用収支とキャッシュフロー</h2>
@@ -337,6 +339,8 @@ export default function ProjectionPanel({baseInput, baseInputIsValid}: Projectio
             <p className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-950 dark:border-sky-900 dark:bg-sky-950/60 dark:text-sky-100">
                 長期予測は入力した家賃・費用の変化率と修繕予定に基づく税引前の概算です。取得時支出・売却・税金は含まず、将来の収支や投資成果を保証しません。
             </p>
-        </section>
+            </section>
+            <ExitPanel baseInput={baseInput} projections={projections}/>
+        </>
     );
 }
