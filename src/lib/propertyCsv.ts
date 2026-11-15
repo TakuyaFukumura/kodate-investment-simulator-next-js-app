@@ -1,8 +1,4 @@
-import {
-    InvestmentInput,
-    InvestmentInputField,
-    validateInvestmentInput,
-} from './investment';
+import {InvestmentInput, InvestmentInputField, validateInvestmentInput,} from './investment';
 
 export type PropertyScenario = InvestmentInput & {
     id: string;

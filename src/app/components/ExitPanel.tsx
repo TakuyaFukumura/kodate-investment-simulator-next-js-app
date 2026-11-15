@@ -2,11 +2,8 @@
 
 import {useMemo, useState} from 'react';
 import type {InvestmentInput} from '../../lib/investment';
-import {
-    calculateExitScenarios,
-    validateExitAssumptions,
-} from '../../lib/exit';
 import type {ExitAssumptions, ExitScenario} from '../../lib/exit';
+import {calculateExitScenarios, validateExitAssumptions,} from '../../lib/exit';
 import type {AnnualProjection} from '../../lib/projection';
 import ExitChart from './ExitChart';
 
@@ -183,12 +180,14 @@ export default function ExitPanel({baseInput, projections}: ExitPanelProps) {
 
                 <div className="space-y-5">
                     {!projections && (
-                        <p role="status" className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                        <p role="status"
+                           className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
                             基本試算と運用予測の入力が有効になると、売却結果を表示します。
                         </p>
                     )}
                     {projections && errors.length > 0 && (
-                        <p role="status" className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                        <p role="status"
+                           className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
                             売却条件を確認してください。有効な値になるまで売却結果を表示しません。
                         </p>
                     )}
@@ -197,44 +196,51 @@ export default function ExitPanel({baseInput, projections}: ExitPanelProps) {
                             <ExitChart scenarios={scenarios}/>
                             <div>
                                 <h3 className="mb-3 text-sm font-bold">保有年数別の売却・投資全体結果</h3>
-                                <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-                                    <table className="min-w-[1550px] w-full border-collapse text-right text-xs tabular-nums">
+                                <div
+                                    className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                                    <table
+                                        className="min-w-[1550px] w-full border-collapse text-right text-xs tabular-nums">
                                         <caption className="sr-only">保有年数別の売却・投資全体結果（単位：万円）</caption>
-                                        <thead className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                                            <tr>
-                                                <th scope="col" className="sticky left-0 bg-slate-100 px-3 py-2 text-left dark:bg-slate-800">売却年</th>
-                                                <th scope="col" className="px-3 py-2">累計運営CF</th>
-                                                <th scope="col" className="px-3 py-2">売却年NOI</th>
-                                                <th scope="col" className="px-3 py-2">売却価格</th>
-                                                <th scope="col" className="px-3 py-2">仲介手数料</th>
-                                                <th scope="col" className="px-3 py-2">印紙税</th>
-                                                <th scope="col" className="px-3 py-2">完済手数料</th>
-                                                <th scope="col" className="px-3 py-2">その他費用</th>
-                                                <th scope="col" className="px-3 py-2">売却時残債</th>
-                                                <th scope="col" className="px-3 py-2">売却後手残り</th>
-                                                <th scope="col" className="px-3 py-2">総損益</th>
-                                                <th scope="col" className="px-3 py-2">単純損益率</th>
-                                            </tr>
+                                        <thead
+                                            className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                        <tr>
+                                            <th scope="col"
+                                                className="sticky left-0 bg-slate-100 px-3 py-2 text-left dark:bg-slate-800">売却年
+                                            </th>
+                                            <th scope="col" className="px-3 py-2">累計運営CF</th>
+                                            <th scope="col" className="px-3 py-2">売却年NOI</th>
+                                            <th scope="col" className="px-3 py-2">売却価格</th>
+                                            <th scope="col" className="px-3 py-2">仲介手数料</th>
+                                            <th scope="col" className="px-3 py-2">印紙税</th>
+                                            <th scope="col" className="px-3 py-2">完済手数料</th>
+                                            <th scope="col" className="px-3 py-2">その他費用</th>
+                                            <th scope="col" className="px-3 py-2">売却時残債</th>
+                                            <th scope="col" className="px-3 py-2">売却後手残り</th>
+                                            <th scope="col" className="px-3 py-2">総損益</th>
+                                            <th scope="col" className="px-3 py-2">単純損益率</th>
+                                        </tr>
                                         </thead>
                                         <tbody>
-                                            {scenarios.map((scenario: ExitScenario) => (
-                                                <tr key={scenario.year} className="border-t border-slate-200 dark:border-slate-700">
-                                                    <th scope="row" className="sticky left-0 bg-white px-3 py-2 text-left font-semibold dark:bg-slate-900">
-                                                        {scenario.year}年
-                                                    </th>
-                                                    <td className="px-3 py-2">{formatMan(scenario.cumulativeOperatingCashFlowMan)}</td>
-                                                    <td className="px-3 py-2">{formatMan(scenario.noiMan)}</td>
-                                                    <td className="px-3 py-2">{formatMan(scenario.salePriceMan)}</td>
-                                                    <td className="px-3 py-2">{formatMan(scenario.brokerageFeeMan)}</td>
-                                                    <td className="px-3 py-2">{formatMan(scenario.stampTaxMan)}</td>
-                                                    <td className="px-3 py-2">{formatMan(scenario.loanPayoffFeeMan)}</td>
-                                                    <td className="px-3 py-2">{formatMan(scenario.otherSaleCostMan)}</td>
-                                                    <td className="px-3 py-2">{formatMan(scenario.remainingLoanBalanceMan)}</td>
-                                                    <td className="px-3 py-2">{formatMan(scenario.netSaleProceedsMan)}</td>
-                                                    <td className="px-3 py-2 font-semibold">{formatMan(scenario.totalProfitMan)}</td>
-                                                    <td className="px-3 py-2">{formatPercent(scenario.simpleReturnPercent)}</td>
-                                                </tr>
-                                            ))}
+                                        {scenarios.map((scenario: ExitScenario) => (
+                                            <tr key={scenario.year}
+                                                className="border-t border-slate-200 dark:border-slate-700">
+                                                <th scope="row"
+                                                    className="sticky left-0 bg-white px-3 py-2 text-left font-semibold dark:bg-slate-900">
+                                                    {scenario.year}年
+                                                </th>
+                                                <td className="px-3 py-2">{formatMan(scenario.cumulativeOperatingCashFlowMan)}</td>
+                                                <td className="px-3 py-2">{formatMan(scenario.noiMan)}</td>
+                                                <td className="px-3 py-2">{formatMan(scenario.salePriceMan)}</td>
+                                                <td className="px-3 py-2">{formatMan(scenario.brokerageFeeMan)}</td>
+                                                <td className="px-3 py-2">{formatMan(scenario.stampTaxMan)}</td>
+                                                <td className="px-3 py-2">{formatMan(scenario.loanPayoffFeeMan)}</td>
+                                                <td className="px-3 py-2">{formatMan(scenario.otherSaleCostMan)}</td>
+                                                <td className="px-3 py-2">{formatMan(scenario.remainingLoanBalanceMan)}</td>
+                                                <td className="px-3 py-2">{formatMan(scenario.netSaleProceedsMan)}</td>
+                                                <td className="px-3 py-2 font-semibold">{formatMan(scenario.totalProfitMan)}</td>
+                                                <td className="px-3 py-2">{formatPercent(scenario.simpleReturnPercent)}</td>
+                                            </tr>
+                                        ))}
                                         </tbody>
                                     </table>
                                 </div>

@@ -19,7 +19,7 @@ function getYearLabelInterval(yearCount: number): number {
 
 export default function ExitChart({scenarios}: ExitChartProps) {
     const validScenarios = scenarios.filter(
-        (scenario): scenario is ExitScenario & {totalProfitMan: number} =>
+        (scenario): scenario is ExitScenario & { totalProfitMan: number } =>
             scenario.totalProfitMan !== null
     );
 

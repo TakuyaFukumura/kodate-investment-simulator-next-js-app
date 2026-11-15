@@ -106,7 +106,8 @@ export default function ProjectionCharts({years}: ProjectionChartsProps) {
                         <text x="20" y="16" fill="currentColor" fontSize="11">
                             最大 {formatMan(loanBalanceMax)}
                         </text>
-                        <line x1="20" x2={chartWidth - 20} y1={plotBottom} y2={plotBottom} stroke="currentColor" opacity="0.35"/>
+                        <line x1="20" x2={chartWidth - 20} y1={plotBottom} y2={plotBottom} stroke="currentColor"
+                              opacity="0.35"/>
                         <text x="20" y={plotBottom - 5} fill="currentColor" fontSize="11">0</text>
                         <polyline
                             points={linePoints}

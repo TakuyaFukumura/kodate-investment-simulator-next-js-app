@@ -1,6 +1,6 @@
+import type {ProjectionAssumptions} from '../../../src/lib/projection';
 import {calculateProjection, validateProjectionAssumptions} from '../../../src/lib/projection';
 import type {InvestmentInput} from '../../../src/lib/investment';
-import type {ProjectionAssumptions} from '../../../src/lib/projection';
 
 const baseInput: InvestmentInput = {
     purchasePriceMan: 800,

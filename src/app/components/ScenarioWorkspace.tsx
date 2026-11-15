@@ -1,7 +1,7 @@
 'use client';
 
-import {useMemo, useRef, useState} from 'react';
 import type {ChangeEvent, KeyboardEvent} from 'react';
+import {useMemo, useRef, useState} from 'react';
 import type {InvestmentInput, InvestmentInputField} from '../../lib/investment';
 import {calculateInvestment, validateInvestmentInput} from '../../lib/investment';
 import type {ExitAssumptions, ExitValidationError} from '../../lib/exit';
@@ -9,6 +9,7 @@ import {validateExitAssumptions} from '../../lib/exit';
 import type {ProjectionValidationError} from '../../lib/projection';
 import {calculateProjection, validateProjectionAssumptions} from '../../lib/projection';
 import type {PropertyScenario} from '../../lib/propertyCsv';
+import type {ScenarioConditions, ScenarioConditionsById, ScenarioId,} from '../../lib/scenarioComparison';
 import {
     calculateScenarioResults,
     createScenarioFilename,
@@ -17,11 +18,6 @@ import {
     SCENARIO_LABELS,
     serializeScenarioBundle,
     serializeScenarioResultsCsv,
-} from '../../lib/scenarioComparison';
-import type {
-    ScenarioConditions,
-    ScenarioConditionsById,
-    ScenarioId,
 } from '../../lib/scenarioComparison';
 import WaterfallChart from './WaterfallChart';
 import ProjectionCharts from './ProjectionCharts';
@@ -76,7 +72,7 @@ const inputFieldOrder: InvestmentInputField[] = [
     'annualOtherOperatingCostMan',
 ];
 
-const inputDefinitions: Record<InvestmentInputField, {label: string; unit: string; step: string}> = {
+const inputDefinitions: Record<InvestmentInputField, { label: string; unit: string; step: string }> = {
     purchasePriceMan: {label: '物件価格', unit: '万円', step: '0.1'},
     monthlyRentMan: {label: '月額家賃', unit: '万円／月', step: '0.1'},
     brokerageFeeMan: {label: '仲介手数料', unit: '万円', step: '0.1'},
@@ -98,7 +94,7 @@ const inputDefinitions: Record<InvestmentInputField, {label: string; unit: strin
     annualOtherOperatingCostMan: {label: 'その他', unit: '万円／年', step: '0.1'},
 };
 
-const fieldGroups: {title: string; fields: InvestmentInputField[]}[] = [
+const fieldGroups: { title: string; fields: InvestmentInputField[] }[] = [
     {title: '物件・賃貸条件', fields: ['purchasePriceMan', 'monthlyRentMan', 'vacancyMonths']},
     {
         title: '取得費用・初回リフォーム',
@@ -351,7 +347,7 @@ function formatTableMan(amount: number | null): string {
     return amount === null ? '—' : formatMan(amount);
 }
 
-export default function ScenarioWorkspace({properties}: {properties: PropertyScenario[]}) {
+export default function ScenarioWorkspace({properties}: { properties: PropertyScenario[] }) {
     const [cases, setCases] = useState(() => createInitialScenarioForms(properties));
     const [holdingYears, setHoldingYears] = useState('30');
     const [selectedYear, setSelectedYear] = useState(30);
@@ -363,8 +359,8 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
 
     const parsedHoldingYears = parseNumber(holdingYears);
     const holdingYearsError = !Number.isInteger(parsedHoldingYears) ||
-        parsedHoldingYears < 1 ||
-        parsedHoldingYears > 50
+    parsedHoldingYears < 1 ||
+    parsedHoldingYears > 50
         ? '保有期間は1〜50年の整数で入力してください。'
         : null;
 
@@ -683,7 +679,8 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                         <h3 className="mb-4 text-sm font-bold">物件情報</h3>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <label htmlFor={`sample-property-${activeCase}`} className="mb-1.5 block text-sm font-medium">
+                                <label htmlFor={`sample-property-${activeCase}`}
+                                       className="mb-1.5 block text-sm font-medium">
                                     サンプル物件から条件を読み込む
                                 </label>
                                 <select
@@ -699,7 +696,8 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                                 </select>
                             </div>
                             <div>
-                                <label htmlFor={`property-name-${activeCase}`} className="mb-1.5 block text-sm font-medium">
+                                <label htmlFor={`property-name-${activeCase}`}
+                                       className="mb-1.5 block text-sm font-medium">
                                     物件名
                                 </label>
                                 <input
@@ -747,7 +745,8 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                                         <div key={field}>
                                             <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium">
                                                 {definition.label}
-                                                <span className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400">
+                                                <span
+                                                    className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400">
                                                     （{definition.unit}）
                                                 </span>
                                             </label>
@@ -779,7 +778,8 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                         </legend>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <label htmlFor={`rent-change-${activeCase}`} className="mb-1.5 block text-sm font-medium">
+                                <label htmlFor={`rent-change-${activeCase}`}
+                                       className="mb-1.5 block text-sm font-medium">
                                     家賃の年間変化率（%）
                                 </label>
                                 <input
@@ -803,7 +803,8 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                                 )}
                             </div>
                             <div>
-                                <label htmlFor={`cost-change-${activeCase}`} className="mb-1.5 block text-sm font-medium">
+                                <label htmlFor={`cost-change-${activeCase}`}
+                                       className="mb-1.5 block text-sm font-medium">
                                     運営費の年間変化率（%）
                                 </label>
                                 <input
@@ -879,7 +880,8 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                                                             aria-invalid={Boolean(yearError)}
                                                             className={inputClassName}
                                                         />
-                                                        {yearError && <p className="mt-1 text-xs text-red-700 dark:text-red-300">{yearError}</p>}
+                                                        {yearError &&
+                                                            <p className="mt-1 text-xs text-red-700 dark:text-red-300">{yearError}</p>}
                                                     </div>
                                                     <div>
                                                         <label
@@ -900,7 +902,8 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                                                             aria-invalid={Boolean(labelError)}
                                                             className={inputClassName}
                                                         />
-                                                        {labelError && <p className="mt-1 text-xs text-red-700 dark:text-red-300">{labelError}</p>}
+                                                        {labelError &&
+                                                            <p className="mt-1 text-xs text-red-700 dark:text-red-300">{labelError}</p>}
                                                     </div>
                                                     <div>
                                                         <label
@@ -923,7 +926,8 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                                                             aria-invalid={Boolean(amountError)}
                                                             className={inputClassName}
                                                         />
-                                                        {amountError && <p className="mt-1 text-xs text-red-700 dark:text-red-300">{amountError}</p>}
+                                                        {amountError &&
+                                                            <p className="mt-1 text-xs text-red-700 dark:text-red-300">{amountError}</p>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -973,7 +977,8 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                                             aria-invalid={Boolean(error)}
                                             className={inputClassName}
                                         />
-                                        {error && <p className="mt-1 text-xs text-red-700 dark:text-red-300">{error}</p>}
+                                        {error &&
+                                            <p className="mt-1 text-xs text-red-700 dark:text-red-300">{error}</p>}
                                     </div>
                                 );
                             })}
@@ -1030,7 +1035,8 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                 </div>
 
                 {!allCasesAreValid && (
-                    <div className="mt-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-950 dark:bg-amber-950 dark:text-amber-100">
+                    <div
+                        className="mt-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-950 dark:bg-amber-950 dark:text-amber-100">
                         <p className="font-semibold">
                             3ケースすべての条件が有効になると、比較結果とファイル出力を利用できます。
                         </p>
@@ -1043,7 +1049,8 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                     </div>
                 )}
                 {(importErrors.length > 0 || fileError) && (
-                    <div role="alert" className="mt-6 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100">
+                    <div role="alert"
+                         className="mt-6 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100">
                         <p className="font-semibold">ファイルを処理できませんでした。現在のケース条件は変更していません。</p>
                         {fileError && <p className="mt-2">{fileError}</p>}
                         {importErrors.length > 0 && (
@@ -1074,9 +1081,11 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                                 className={inputClassName}
                             >
                                 {Array.from(
-                                    {length: Number.isInteger(parsedHoldingYears) &&
+                                    {
+                                        length: Number.isInteger(parsedHoldingYears) &&
                                         parsedHoldingYears >= 1 && parsedHoldingYears <= 50
-                                        ? parsedHoldingYears : 0},
+                                            ? parsedHoldingYears : 0
+                                    },
                                     (_, index) => index + 1
                                 ).map((year) => (
                                     <option key={year} value={year}>{year}年</option>
@@ -1137,105 +1146,114 @@ export default function ScenarioWorkspace({properties}: {properties: PropertySce
                                 </p>
                             </div>
                             <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-                                <table className="min-w-[2200px] w-full border-collapse text-right text-xs tabular-nums">
+                                <table
+                                    className="min-w-[2200px] w-full border-collapse text-right text-xs tabular-nums">
                                     <caption className="sr-only">
                                         基準・楽観・慎重ケースの年次運用・融資・売却詳細
                                     </caption>
-                                    <thead className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                                        <tr>
-                                            <th scope="col" className="sticky left-0 z-20 w-20 bg-slate-100 px-3 py-2 text-left dark:bg-slate-800">ケース</th>
-                                            <th scope="col" className="sticky left-20 z-20 w-40 bg-slate-100 px-3 py-2 text-left dark:bg-slate-800">物件名</th>
-                                            <th scope="col" className="sticky left-[15rem] z-20 w-20 bg-slate-100 px-3 py-2 text-left dark:bg-slate-800">年</th>
-                                            {[
-                                                '満室想定家賃',
-                                                '空室損失',
-                                                '実効家賃',
-                                                '運営費',
-                                                'NOI',
-                                                '修繕費',
-                                                '元金返済',
-                                                '利息返済',
-                                                '年間返済額',
-                                                '年末残債',
-                                                '年次運営CF',
-                                                '累計運営CF',
-                                                'DSCR',
-                                                '売却価格',
-                                                '仲介手数料',
-                                                '印紙税',
-                                                'ローン完済手数料',
-                                                'その他売却費用',
-                                                '売却後手残り',
-                                                '総損益',
-                                                '単純損益率',
-                                            ].map((heading) => (
-                                                <th key={heading} scope="col" className="px-3 py-2">{heading}</th>
-                                            ))}
-                                        </tr>
+                                    <thead
+                                        className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                    <tr>
+                                        <th scope="col"
+                                            className="sticky left-0 z-20 w-20 bg-slate-100 px-3 py-2 text-left dark:bg-slate-800">ケース
+                                        </th>
+                                        <th scope="col"
+                                            className="sticky left-20 z-20 w-40 bg-slate-100 px-3 py-2 text-left dark:bg-slate-800">物件名
+                                        </th>
+                                        <th scope="col"
+                                            className="sticky left-[15rem] z-20 w-20 bg-slate-100 px-3 py-2 text-left dark:bg-slate-800">年
+                                        </th>
+                                        {[
+                                            '満室想定家賃',
+                                            '空室損失',
+                                            '実効家賃',
+                                            '運営費',
+                                            'NOI',
+                                            '修繕費',
+                                            '元金返済',
+                                            '利息返済',
+                                            '年間返済額',
+                                            '年末残債',
+                                            '年次運営CF',
+                                            '累計運営CF',
+                                            'DSCR',
+                                            '売却価格',
+                                            '仲介手数料',
+                                            '印紙税',
+                                            'ローン完済手数料',
+                                            'その他売却費用',
+                                            '売却後手残り',
+                                            '総損益',
+                                            '単純損益率',
+                                        ].map((heading) => (
+                                            <th key={heading} scope="col" className="px-3 py-2">{heading}</th>
+                                        ))}
+                                    </tr>
                                     </thead>
                                     <tbody>
-                                        {Array.from({length: parsedHoldingYears}, (_, index) => index + 1)
-                                            .flatMap((year) => results.map((result) => {
-                                                const projection = result.projections[year - 1];
-                                                const exit = result.exits[year - 1];
-                                                const cells = [
-                                                    formatTableMan(projection.potentialAnnualRentMan),
-                                                    formatTableMan(projection.vacancyLossMan),
-                                                    formatTableMan(projection.effectiveAnnualRentMan),
-                                                    formatTableMan(projection.annualOperatingCostsMan),
-                                                    formatTableMan(projection.noiMan),
-                                                    formatTableMan(projection.repairCostsMan),
-                                                    formatTableMan(projection.principalRepaymentMan),
-                                                    formatTableMan(projection.interestRepaymentMan),
-                                                    formatTableMan(projection.loanRepaymentMan),
-                                                    formatTableMan(projection.remainingLoanBalanceMan),
-                                                    formatTableMan(projection.cashFlowMan),
-                                                    formatTableMan(projection.cumulativeCashFlowMan),
-                                                    formatRatio(projection.dscr),
-                                                    formatTableMan(exit.salePriceMan),
-                                                    formatTableMan(exit.brokerageFeeMan),
-                                                    formatTableMan(exit.stampTaxMan),
-                                                    formatTableMan(exit.loanPayoffFeeMan),
-                                                    formatTableMan(exit.otherSaleCostMan),
-                                                    formatTableMan(exit.netSaleProceedsMan),
-                                                    formatTableMan(exit.totalProfitMan),
-                                                    formatPercent(exit.simpleReturnPercent),
-                                                ];
-                                                return (
-                                                    <tr
-                                                        key={`${result.id}-${year}`}
-                                                        className="border-t border-slate-200 dark:border-slate-700"
+                                    {Array.from({length: parsedHoldingYears}, (_, index) => index + 1)
+                                        .flatMap((year) => results.map((result) => {
+                                            const projection = result.projections[year - 1];
+                                            const exit = result.exits[year - 1];
+                                            const cells = [
+                                                formatTableMan(projection.potentialAnnualRentMan),
+                                                formatTableMan(projection.vacancyLossMan),
+                                                formatTableMan(projection.effectiveAnnualRentMan),
+                                                formatTableMan(projection.annualOperatingCostsMan),
+                                                formatTableMan(projection.noiMan),
+                                                formatTableMan(projection.repairCostsMan),
+                                                formatTableMan(projection.principalRepaymentMan),
+                                                formatTableMan(projection.interestRepaymentMan),
+                                                formatTableMan(projection.loanRepaymentMan),
+                                                formatTableMan(projection.remainingLoanBalanceMan),
+                                                formatTableMan(projection.cashFlowMan),
+                                                formatTableMan(projection.cumulativeCashFlowMan),
+                                                formatRatio(projection.dscr),
+                                                formatTableMan(exit.salePriceMan),
+                                                formatTableMan(exit.brokerageFeeMan),
+                                                formatTableMan(exit.stampTaxMan),
+                                                formatTableMan(exit.loanPayoffFeeMan),
+                                                formatTableMan(exit.otherSaleCostMan),
+                                                formatTableMan(exit.netSaleProceedsMan),
+                                                formatTableMan(exit.totalProfitMan),
+                                                formatPercent(exit.simpleReturnPercent),
+                                            ];
+                                            return (
+                                                <tr
+                                                    key={`${result.id}-${year}`}
+                                                    className="border-t border-slate-200 dark:border-slate-700"
+                                                >
+                                                    <th
+                                                        scope="row"
+                                                        className="sticky left-0 z-10 bg-white px-3 py-2 text-left font-semibold dark:bg-slate-900"
                                                     >
-                                                        <th
-                                                            scope="row"
-                                                            className="sticky left-0 z-10 bg-white px-3 py-2 text-left font-semibold dark:bg-slate-900"
+                                                        {SCENARIO_LABELS[result.id]}
+                                                    </th>
+                                                    <td className="sticky left-20 z-10 bg-white px-3 py-2 text-left dark:bg-slate-900">
+                                                        {result.propertyName}
+                                                    </td>
+                                                    <td className="sticky left-[15rem] z-10 bg-white px-3 py-2 text-left dark:bg-slate-900">
+                                                        {year}年
+                                                    </td>
+                                                    {cells.map((cell, cellIndex) => (
+                                                        <td
+                                                            key={`${result.id}-${year}-${cellIndex}`}
+                                                            className="px-3 py-2"
                                                         >
-                                                            {SCENARIO_LABELS[result.id]}
-                                                        </th>
-                                                        <td className="sticky left-20 z-10 bg-white px-3 py-2 text-left dark:bg-slate-900">
-                                                            {result.propertyName}
+                                                            {cell}
                                                         </td>
-                                                        <td className="sticky left-[15rem] z-10 bg-white px-3 py-2 text-left dark:bg-slate-900">
-                                                            {year}年
-                                                        </td>
-                                                        {cells.map((cell, cellIndex) => (
-                                                            <td
-                                                                key={`${result.id}-${year}-${cellIndex}`}
-                                                                className="px-3 py-2"
-                                                            >
-                                                                {cell}
-                                                            </td>
-                                                        ))}
-                                                    </tr>
-                                                );
-                                            }))}
+                                                    ))}
+                                                </tr>
+                                            );
+                                        }))}
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </>
                 ) : (
-                    <p role="status" className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                    <p role="status"
+                       className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
                         3ケースすべての基本試算・運用・売却条件が有効になると、比較結果を表示します。
                     </p>
                 )}
