@@ -1,109 +1,95 @@
 'use client';
 
-import {useCallback, useEffect, useRef, useState} from 'react';
-import {isErrorResponse, isMessageResponse} from '../types/api';
+import {useCallback, useEffect, useState} from 'react';
+import ScenarioWorkspace from './components/ScenarioWorkspace';
+import {parsePropertyCsv} from '../lib/propertyCsv';
+import type {PropertyScenario} from '../lib/propertyCsv';
+
+async function fetchProperties(): Promise<PropertyScenario[]> {
+    const response = await fetch('/data/sample-properties.csv');
+    if (!response.ok) {
+        throw new Error(`サンプルCSVを読み込めませんでした（HTTP ${response.status}）。`);
+    }
+    return parsePropertyCsv(await response.text());
+}
 
 export default function Home() {
-    const [message, setMessage] = useState<string | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-    const requestController = useRef<AbortController | null>(null);
+    const [properties, setProperties] = useState<PropertyScenario[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
-    const fetchMessage = useCallback(async () => {
-        requestController.current?.abort();
-        const controller = new AbortController();
-        requestController.current = controller;
-        setLoading(true);
-        setError(null);
+    useEffect(() => {
+        let isCurrent = true;
+        void fetchProperties()
+            .then((loadedProperties) => {
+                if (isCurrent) {
+                    setProperties(loadedProperties);
+                }
+            })
+            .catch((error: unknown) => {
+                if (isCurrent) {
+                    setLoadError(
+                        error instanceof Error ? error.message : 'サンプルCSVの読み込みに失敗しました。'
+                    );
+                }
+            })
+            .finally(() => {
+                if (isCurrent) {
+                    setIsLoading(false);
+                }
+            });
+        return () => {
+            isCurrent = false;
+        };
+    }, []);
 
+    const retryLoadingProperties = useCallback(async () => {
+        setIsLoading(true);
+        setLoadError(null);
         try {
-            const response = await fetch('/api/message', {signal: controller.signal});
-            const data: unknown = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    isErrorResponse(data) ? data.error : 'メッセージの取得に失敗しました'
-                );
-            }
-
-            if (!isMessageResponse(data)) {
-                throw new Error('APIレスポンスの形式が不正です');
-            }
-
-            setMessage(data.message);
-        } catch (err) {
-            if (err instanceof Error && err.name === 'AbortError') {
-                return;
-            }
-            setError(err instanceof Error ? err.message : '予期しないエラーが発生しました');
+            setProperties(await fetchProperties());
+        } catch (error) {
+            setProperties([]);
+            setLoadError(error instanceof Error
+                ? error.message
+                : 'サンプルCSVの読み込みに失敗しました。');
         } finally {
-            if (!controller.signal.aborted) {
-                setLoading(false);
-            }
+            setIsLoading(false);
         }
     }, []);
 
-    useEffect(() => {
-        // 初回表示時にAPIを取得し、取得完了後に表示状態を更新する。
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        void fetchMessage();
-        return () => {
-            requestController.current?.abort();
-        };
-    }, [fetchMessage]);
-
-    let content;
-    if (loading) {
-        content = (
-            <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600 dark:text-gray-400">読み込み中...</span>
-            </div>
-        );
-    } else if (error) {
-        content = (
-            <div className="text-red-600 dark:text-red-400 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                エラー: {error}
-                <button
-                    type="button"
-                    onClick={() => void fetchMessage()}
-                    className="mt-4 block mx-auto rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                >
-                    再試行
-                </button>
-            </div>
-        );
-    } else {
-        content = (
-            <div
-                className="text-2xl font-semibold text-blue-600 dark:text-blue-400 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-700">
-                {message}
-            </div>
-        );
-    }
-
     return (
-        <div
-            className="font-sans flex items-center justify-center min-h-[calc(100vh-4rem)] bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-            <main className="text-center p-8">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-12 max-w-md mx-auto">
-                    <h1 className="text-4xl font-bold mb-8 text-gray-800 dark:text-gray-200">
-                        kodate-investment-simulator-next-js-app
-                    </h1>
-
-                    <div className="mb-8">
-                        {content}
-                    </div>
-
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        このメッセージはSQLiteデータベースから取得されています
+        <main className="min-h-[calc(100vh-4rem)] bg-slate-50 px-4 py-8 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl">
+                <div className="mb-8">
+                    <p className="text-sm font-semibold tracking-wide text-emerald-700 dark:text-emerald-300">
+                        購入から運用・売却までの比較試算
                     </p>
-
-                    <div className="text-xs text-gray-400 dark:text-gray-500">
-                        Next.js + TypeScript + Tailwind CSS + SQLite
-                    </div>
+                    <h1 className="mt-2 text-3xl font-bold tracking-tight">戸建て投資シミュレータ</h1>
+                    <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                        同梱の架空サンプルを基準に、条件の異なる3ケースを比較できます。入力値は保存されません。
+                    </p>
                 </div>
-            </main>
-        </div>
+
+                {isLoading ? (
+                    <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                        <p role="status">サンプル物件を読み込んでいます...</p>
+                    </div>
+                ) : loadError ? (
+                    <div className="rounded-xl border border-red-300 bg-red-50 p-6 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100">
+                        <p role="alert">サンプルデータを利用できません：{loadError}</p>
+                        <button
+                            type="button"
+                            onClick={() => void retryLoadingProperties()}
+                            className="mt-4 rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
+                        >
+                            再読み込み
+                        </button>
+                    </div>
+                ) : properties.length > 0 ? (
+                    <ScenarioWorkspace properties={properties}/>
+                ) : null}
+            </div>
+        </main>
     );
 }

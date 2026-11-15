@@ -5,8 +5,8 @@ import Header from "./components/Header";
 import React from "react";
 
 export const metadata: Metadata = {
-    title: "基本Next.jsアプリ",
-    description: "SQLiteからメッセージを取得するシンプルなNext.jsアプリケーション",
+    title: "戸建て投資シミュレータ",
+    description: "戸建て投資の取得・運用・売却条件を3ケースで比較するシミュレータ",
 };
 
 export default function RootLayout({

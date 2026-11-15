@@ -34,20 +34,23 @@ export default function Header() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     <div className="flex items-center">
-                        <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-                            kodate-investment-simulator-next-js-app
-                        </h1>
+                        <p className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                            戸建て投資シミュレータ
+                        </p>
                     </div>
 
                     <div className="flex items-center">
                         <button
+                            type="button"
                             onClick={handleThemeToggle}
+                            aria-label="ダークモード"
+                            aria-pressed={displayTheme === 'dark'}
                             className="flex items-center gap-2 px-3 py-2 text-sm font-medium
                             text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700
                             rounded-lg transition-colors duration-200"
                             title={`現在: ${displayTheme === 'light' ? 'ライトモード' : 'ダークモード'}`}
                         >
-                            <span className="text-lg">{getThemeIcon()}</span>
+                            <span aria-hidden="true" className="text-lg">{getThemeIcon()}</span>
                         </button>
                     </div>
                 </div>
