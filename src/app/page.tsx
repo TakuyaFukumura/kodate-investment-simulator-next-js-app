@@ -2,8 +2,8 @@
 
 import {useCallback, useEffect, useState} from 'react';
 import ScenarioWorkspace from './components/ScenarioWorkspace';
-import {parsePropertyCsv} from '../lib/propertyCsv';
 import type {PropertyScenario} from '../lib/propertyCsv';
+import {parsePropertyCsv} from '../lib/propertyCsv';
 
 async function fetchProperties(): Promise<PropertyScenario[]> {
     const response = await fetch('/data/sample-properties.csv');
@@ -59,7 +59,8 @@ export default function Home() {
     }, []);
 
     return (
-        <main className="min-h-[calc(100vh-4rem)] bg-slate-50 px-4 py-8 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-6 lg:px-8">
+        <main
+            className="min-h-[calc(100vh-4rem)] bg-slate-50 px-4 py-8 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-7xl">
                 <div className="mb-8">
                     <p className="text-sm font-semibold tracking-wide text-emerald-700 dark:text-emerald-300">
@@ -72,11 +73,13 @@ export default function Home() {
                 </div>
 
                 {isLoading ? (
-                    <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                    <div
+                        className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
                         <p role="status">サンプル物件を読み込んでいます...</p>
                     </div>
                 ) : loadError ? (
-                    <div className="rounded-xl border border-red-300 bg-red-50 p-6 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100">
+                    <div
+                        className="rounded-xl border border-red-300 bg-red-50 p-6 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100">
                         <p role="alert">サンプルデータを利用できません：{loadError}</p>
                         <button
                             type="button"

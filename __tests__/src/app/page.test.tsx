@@ -228,7 +228,8 @@ describe('Home', () => {
             value: revokeObjectUrl,
         });
         const downloadClick = jest.spyOn(HTMLAnchorElement.prototype, 'click')
-            .mockImplementation(() => {});
+            .mockImplementation(() => {
+            });
 
         fireEvent.click(screen.getByRole('button', {name: '条件JSONを出力'}));
         fireEvent.click(screen.getByRole('button', {name: '年次結果CSVを出力'}));

@@ -1,7 +1,11 @@
-import {calculateExitScenarios, calculateStandardBrokerageFeeCapMan, validateExitAssumptions} from '../../../src/lib/exit';
+import type {ExitAssumptions} from '../../../src/lib/exit';
+import {
+    calculateExitScenarios,
+    calculateStandardBrokerageFeeCapMan,
+    validateExitAssumptions
+} from '../../../src/lib/exit';
 import type {InvestmentInput} from '../../../src/lib/investment';
 import type {AnnualProjection} from '../../../src/lib/projection';
-import type {ExitAssumptions} from '../../../src/lib/exit';
 
 const baseInput: InvestmentInput = {
     purchasePriceMan: 1000,

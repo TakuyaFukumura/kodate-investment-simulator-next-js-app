@@ -1,5 +1,5 @@
 import type {ScenarioResults} from '../../lib/scenarioComparison';
-import {SCENARIO_LABELS, SCENARIO_IDS} from '../../lib/scenarioComparison';
+import {SCENARIO_IDS, SCENARIO_LABELS} from '../../lib/scenarioComparison';
 
 type ScenarioComparisonChartProps = {
     results: ScenarioResults[];
@@ -27,7 +27,7 @@ function getYearLabelInterval(yearCount: number): number {
 export default function ScenarioComparisonChart({results}: ScenarioComparisonChartProps) {
     const allExits = results.flatMap(({exits}) => exits);
     const validExits = allExits.filter(
-        (exit): exit is typeof exit & {totalProfitMan: number} => exit.totalProfitMan !== null
+        (exit): exit is typeof exit & { totalProfitMan: number } => exit.totalProfitMan !== null
     );
 
     if (validExits.length === 0) {

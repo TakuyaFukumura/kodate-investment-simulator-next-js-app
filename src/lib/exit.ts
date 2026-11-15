@@ -1,5 +1,5 @@
-import {calculateInvestment} from './investment';
 import type {InvestmentInput} from './investment';
+import {calculateInvestment} from './investment';
 import type {AnnualProjection} from './projection';
 
 export type ExitAssumptions = {

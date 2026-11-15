@@ -1,5 +1,5 @@
-import {calculateAnnualLoanSchedule, calculateInvestment} from './investment';
 import type {InvestmentInput} from './investment';
+import {calculateAnnualLoanSchedule, calculateInvestment} from './investment';
 
 export type ProjectionRepairEvent = {
     id: string;

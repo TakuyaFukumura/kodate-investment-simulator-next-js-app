@@ -1,27 +1,9 @@
-import {
-    calculateInvestment,
-    validateInvestmentInput,
-} from './investment';
-import type {
-    InvestmentInput,
-    InvestmentInputField,
-} from './investment';
-import {
-    calculateExitScenarios,
-    validateExitAssumptions,
-} from './exit';
-import type {
-    ExitAssumptions,
-    ExitScenario,
-} from './exit';
-import {
-    calculateProjection,
-    validateProjectionAssumptions,
-} from './projection';
-import type {
-    AnnualProjection,
-    ProjectionAssumptions,
-} from './projection';
+import type {InvestmentInput, InvestmentInputField,} from './investment';
+import {calculateInvestment, validateInvestmentInput,} from './investment';
+import type {ExitAssumptions, ExitScenario,} from './exit';
+import {calculateExitScenarios, validateExitAssumptions,} from './exit';
+import type {AnnualProjection, ProjectionAssumptions,} from './projection';
+import {calculateProjection, validateProjectionAssumptions,} from './projection';
 
 export const SCENARIO_IDS = ['baseline', 'optimistic', 'cautious'] as const;
 export type ScenarioId = typeof SCENARIO_IDS[number];
@@ -116,8 +98,8 @@ export type ScenarioResults = {
 };
 
 export type ScenarioBundleParseResult =
-    | {success: true; bundle: ScenarioBundle}
-    | {success: false; errors: string[]};
+    | { success: true; bundle: ScenarioBundle }
+    | { success: false; errors: string[] };
 
 export const SCENARIO_CSV_HEADERS = [
     'ケース',
@@ -158,7 +140,7 @@ function addValidationErrors(
     errors: string[],
     scenarioId: ScenarioId,
     fieldLabels: Record<string, string>,
-    validationErrors: {field: string; message: string}[]
+    validationErrors: { field: string; message: string }[]
 ): void {
     validationErrors.forEach(({field, message}) => {
         errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「${fieldLabels[field] ?? field}」: ${message}`);
