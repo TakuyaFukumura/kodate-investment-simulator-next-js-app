@@ -6,7 +6,7 @@ import React from "react";
 
 export const metadata: Metadata = {
     title: "戸建て投資シミュレータ",
-    description: "戸建て物件の購入前収支を試算するシミュレータ",
+    description: "戸建て投資の取得・運用・売却条件を3ケースで比較するシミュレータ",
 };
 
 export default function RootLayout({

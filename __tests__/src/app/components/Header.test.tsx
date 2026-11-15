@@ -160,11 +160,12 @@ describe('Header', () => {
             expect(screen.getByText('☀️')).toBeInTheDocument();
 
             // ボタンをクリック
-            const button = screen.getByRole('button');
+            const button = screen.getByRole('button', {name: 'ダークモード'});
             fireEvent.click(button);
 
             // ダークモードに変更されたことを確認
             expect(screen.getByText('🌙')).toBeInTheDocument();
+            expect(button).toHaveAttribute('aria-pressed', 'true');
         });
 
         it('ダークモードからライトモードに切り替わる', () => {
@@ -174,11 +175,12 @@ describe('Header', () => {
             expect(screen.getByText('🌙')).toBeInTheDocument();
 
             // ボタンをクリック
-            const button = screen.getByRole('button');
+            const button = screen.getByRole('button', {name: 'ダークモード'});
             fireEvent.click(button);
 
             // ライトモードに変更されたことを確認
             expect(screen.getByText('☀️')).toBeInTheDocument();
+            expect(button).toHaveAttribute('aria-pressed', 'false');
         });
 
         it('複数回のクリックで正しく切り替わる', () => {
@@ -215,11 +217,19 @@ describe('Header', () => {
         it('適切なaria属性が設定されている', () => {
             renderWithProvider();
 
-            const button = screen.getByRole('button');
+            const button = screen.getByRole('button', {name: 'ダークモード'});
 
-            // title属性による説明があることを確認
+            expect(button).toHaveAttribute('type', 'button');
+            expect(button).toHaveAttribute('aria-pressed', 'false');
             expect(button).toHaveAttribute('title');
             expect(button.getAttribute('title')).toContain('現在:');
+        });
+
+        it('現在のテーマを押下状態で示す', () => {
+            renderWithProvider('dark');
+
+            expect(screen.getByRole('button', {name: 'ダークモード'}))
+                .toHaveAttribute('aria-pressed', 'true');
         });
     });
 

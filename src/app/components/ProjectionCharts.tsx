@@ -36,7 +36,7 @@ export default function ProjectionCharts({years}: ProjectionChartsProps) {
 
     return (
         <div className="grid gap-5 xl:grid-cols-2">
-            <figure className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
+            <figure className="min-w-0 rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
                 <h3 className="mb-2 text-sm font-bold">年次税引前CF（万円）</h3>
                 <div className="overflow-x-auto">
                     <svg
@@ -93,7 +93,7 @@ export default function ProjectionCharts({years}: ProjectionChartsProps) {
                 </figcaption>
             </figure>
 
-            <figure className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
+            <figure className="min-w-0 rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
                 <h3 className="mb-2 text-sm font-bold">年末ローン残債（万円）</h3>
                 <div className="overflow-x-auto">
                     <svg
