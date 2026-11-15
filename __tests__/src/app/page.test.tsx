@@ -60,10 +60,14 @@ describe('Home', () => {
         render(<Home/>, {reactStrictMode: false});
 
         const selector = await screen.findByRole('combobox', {name: 'サンプル物件'});
+        const holdingYears = screen.getByLabelText('保有期間（年）');
+        fireEvent.change(holdingYears, {target: {value: '2'}});
+        expect(holdingYears).toHaveValue(2);
         fireEvent.change(selector, {target: {value: 'house-2'}});
 
         expect(screen.getByText('サンプルB')).toBeInTheDocument();
         expect(screen.getByLabelText('物件価格（万円）')).toHaveValue(1000);
+        expect(screen.getByLabelText('保有期間（年）')).toHaveValue(30);
         expect(screen.getByText('12.00%')).toBeInTheDocument();
     });
 

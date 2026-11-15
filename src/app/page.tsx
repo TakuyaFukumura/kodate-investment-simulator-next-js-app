@@ -2,6 +2,7 @@
 
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import WaterfallChart from './components/WaterfallChart';
+import ProjectionPanel from './components/ProjectionPanel';
 import {
     calculateInvestment,
     validateInvestmentInput,
@@ -237,129 +238,137 @@ export default function Home() {
                         </button>
                     </div>
                 ) : selectedProperty ? (
-                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-                        <section
-                            aria-labelledby="input-heading"
-                            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6"
-                        >
-                            <div className="mb-6">
-                                <label htmlFor="property-select" className="mb-2 block text-sm font-semibold">
-                                    サンプル物件
-                                </label>
-                                <select
-                                    id="property-select"
-                                    value={selectedProperty.id}
-                                    onChange={(event) => {
-                                        const property = properties.find(({id}) => id === event.target.value);
-                                        if (property) {
-                                            setSelectedPropertyId(property.id);
-                                            setInputValues(toInputValues(property));
-                                        }
-                                    }}
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800"
-                                >
-                                    {properties.map((property) => (
-                                        <option key={property.id} value={property.id}>{property.name}</option>
-                                    ))}
-                                </select>
-                                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                                    {selectedProperty.description}
-                                </p>
-                            </div>
-
-                            <h2 id="input-heading" className="mb-5 text-xl font-bold">試算条件</h2>
-                            <div className="space-y-6">
-                                {fieldGroups.map((group) => (
-                                    <fieldset key={group.title}>
-                                        <legend className="mb-3 text-sm font-bold text-slate-700 dark:text-slate-200">
-                                            {group.title}
-                                        </legend>
-                                        <div className="grid gap-4 sm:grid-cols-2">
-                                            {group.fields.map((field) => {
-                                                const definition = inputDefinitions[field];
-                                                const fieldError = errorByField.get(field);
-                                                const inputId = `input-${field}`;
-                                                const errorId = `${inputId}-error`;
-                                                const min = field === 'purchasePriceMan' ? '0.1'
-                                                    : field === 'annualInterestRatePercent' || field === 'vacancyMonths' ? '0'
-                                                        : field === 'loanTermYears' ? '1' : '0';
-                                                const max = field === 'annualInterestRatePercent' ? '30'
-                                                    : field === 'vacancyMonths' ? '12'
-                                                        : field === 'loanTermYears' ? '50' : undefined;
-
-                                                return (
-                                                    <div key={field}>
-                                                        <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium">
-                                                            {definition.label}
-                                                            <span className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400">
-                                                                （{definition.unit}）
-                                                            </span>
-                                                        </label>
-                                                        <input
-                                                            id={inputId}
-                                                            type="number"
-                                                            inputMode="decimal"
-                                                            min={min}
-                                                            max={max}
-                                                            step={definition.step}
-                                                            value={inputValues[field]}
-                                                            onChange={(event) => updateField(field, event.target.value)}
-                                                            aria-invalid={Boolean(fieldError)}
-                                                            aria-describedby={fieldError ? errorId : undefined}
-                                                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 aria-[invalid=true]:border-red-500 dark:border-slate-600 dark:bg-slate-800"
-                                                        />
-                                                        {fieldError && (
-                                                            <p id={errorId} className="mt-1 text-xs text-red-700 dark:text-red-300">
-                                                                {fieldError}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </fieldset>
-                                ))}
-                            </div>
-                        </section>
-
-                        <section aria-labelledby="result-heading" className="space-y-6">
-                            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
-                                <div className="mb-5 flex items-center justify-between gap-4">
-                                    <div>
-                                        <h2 id="result-heading" className="text-xl font-bold">試算結果</h2>
-                                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">入力の変更に合わせて再計算します</p>
-                                    </div>
-                                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
-                                        税引前
-                                    </span>
-                                </div>
-                                {validationErrors.length > 0 ? (
-                                    <p role="status" className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
-                                        入力内容を確認してください。有効な値になるまで試算結果を表示しません。
-                                    </p>
-                                ) : (
-                                    <dl className="grid gap-3 sm:grid-cols-2">
-                                        {metrics.map((metric) => (
-                                            <div key={metric.label} className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
-                                                <dt className="text-sm text-slate-600 dark:text-slate-300">{metric.label}</dt>
-                                                <dd className="mt-1 text-lg font-bold tabular-nums">{metric.value}</dd>
-                                            </div>
+                    <div className="space-y-6">
+                        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+                            <section
+                                aria-labelledby="input-heading"
+                                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6"
+                            >
+                                <div className="mb-6">
+                                    <label htmlFor="property-select" className="mb-2 block text-sm font-semibold">
+                                        サンプル物件
+                                    </label>
+                                    <select
+                                        id="property-select"
+                                        value={selectedProperty.id}
+                                        onChange={(event) => {
+                                            const property = properties.find(({id}) => id === event.target.value);
+                                            if (property) {
+                                                setSelectedPropertyId(property.id);
+                                                setInputValues(toInputValues(property));
+                                            }
+                                        }}
+                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800"
+                                    >
+                                        {properties.map((property) => (
+                                            <option key={property.id} value={property.id}>{property.name}</option>
                                         ))}
-                                    </dl>
-                                )}
-                            </div>
-
-                            {result && (
-                                <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
-                                    <h2 className="mb-4 text-lg font-bold">年間収支の構成</h2>
-                                    <WaterfallChart result={result}/>
+                                    </select>
+                                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                                        {selectedProperty.description}
+                                    </p>
                                 </div>
-                            )}
 
-                            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-950 dark:border-sky-900 dark:bg-sky-950/60 dark:text-sky-100">
-                                表示結果は入力条件に基づく税引前の概算です。税務・融資判断や実際の投資成果を保証するものではありません。
-                            </div>
-                        </section>
+                                <h2 id="input-heading" className="mb-5 text-xl font-bold">試算条件</h2>
+                                <div className="space-y-6">
+                                    {fieldGroups.map((group) => (
+                                        <fieldset key={group.title}>
+                                            <legend className="mb-3 text-sm font-bold text-slate-700 dark:text-slate-200">
+                                                {group.title}
+                                            </legend>
+                                            <div className="grid gap-4 sm:grid-cols-2">
+                                                {group.fields.map((field) => {
+                                                    const definition = inputDefinitions[field];
+                                                    const fieldError = errorByField.get(field);
+                                                    const inputId = `input-${field}`;
+                                                    const errorId = `${inputId}-error`;
+                                                    const min = field === 'purchasePriceMan' ? '0.1'
+                                                        : field === 'annualInterestRatePercent' || field === 'vacancyMonths' ? '0'
+                                                            : field === 'loanTermYears' ? '1' : '0';
+                                                    const max = field === 'annualInterestRatePercent' ? '30'
+                                                        : field === 'vacancyMonths' ? '12'
+                                                            : field === 'loanTermYears' ? '50' : undefined;
+
+                                                    return (
+                                                        <div key={field}>
+                                                            <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium">
+                                                                {definition.label}
+                                                                <span className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400">
+                                                                    （{definition.unit}）
+                                                                </span>
+                                                            </label>
+                                                            <input
+                                                                id={inputId}
+                                                                type="number"
+                                                                inputMode="decimal"
+                                                                min={min}
+                                                                max={max}
+                                                                step={definition.step}
+                                                                value={inputValues[field]}
+                                                                onChange={(event) => updateField(field, event.target.value)}
+                                                                aria-invalid={Boolean(fieldError)}
+                                                                aria-describedby={fieldError ? errorId : undefined}
+                                                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 aria-[invalid=true]:border-red-500 dark:border-slate-600 dark:bg-slate-800"
+                                                            />
+                                                            {fieldError && (
+                                                                <p id={errorId} className="mt-1 text-xs text-red-700 dark:text-red-300">
+                                                                    {fieldError}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </fieldset>
+                                    ))}
+                                </div>
+                            </section>
+
+                            <section aria-labelledby="result-heading" className="space-y-6">
+                                <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
+                                    <div className="mb-5 flex items-center justify-between gap-4">
+                                        <div>
+                                            <h2 id="result-heading" className="text-xl font-bold">試算結果</h2>
+                                            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">入力の変更に合わせて再計算します</p>
+                                        </div>
+                                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+                                            税引前
+                                        </span>
+                                    </div>
+                                    {validationErrors.length > 0 ? (
+                                        <p role="status" className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                                            入力内容を確認してください。有効な値になるまで試算結果を表示しません。
+                                        </p>
+                                    ) : (
+                                        <dl className="grid gap-3 sm:grid-cols-2">
+                                            {metrics.map((metric) => (
+                                                <div key={metric.label} className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
+                                                    <dt className="text-sm text-slate-600 dark:text-slate-300">{metric.label}</dt>
+                                                    <dd className="mt-1 text-lg font-bold tabular-nums">{metric.value}</dd>
+                                                </div>
+                                            ))}
+                                        </dl>
+                                    )}
+                                </div>
+
+                                {result && (
+                                    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
+                                        <h2 className="mb-4 text-lg font-bold">年間収支の構成</h2>
+                                        <WaterfallChart result={result}/>
+                                    </div>
+                                )}
+
+                                <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-950 dark:border-sky-900 dark:bg-sky-950/60 dark:text-sky-100">
+                                    表示結果は入力条件に基づく税引前の概算です。税務・融資判断や実際の投資成果を保証するものではありません。
+                                </div>
+                            </section>
+                        </div>
+
+                        <ProjectionPanel
+                            key={selectedProperty.id}
+                            baseInput={parsedInput}
+                            baseInputIsValid={validationErrors.length === 0}
+                        />
                     </div>
                 ) : null}
             </div>

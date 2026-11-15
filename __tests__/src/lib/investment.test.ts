@@ -1,4 +1,5 @@
 import {
+    calculateAnnualLoanSchedule,
     calculateInvestment,
     InvestmentInput,
     validateInvestmentInput,
@@ -42,6 +43,49 @@ describe('calculateInvestment', () => {
         expect(result.annualCashFlowMan).toBe(38);
         expect(result.monthlyAverageCashFlowMan).toBeCloseTo(38 / 12);
         expect(result.dscr).toBe(2.52);
+    });
+
+    describe('calculateAnnualLoanSchedule', () => {
+        it('月次返済を年単位に集計し、完済後は返済額と残債を0にする', () => {
+            const schedule = calculateAnnualLoanSchedule(baseInput, 2);
+
+            expect(schedule).toHaveLength(2);
+            expect(schedule[0].principalMan).toBeCloseTo(25);
+            expect(schedule[0].interestMan).toBe(0);
+            expect(schedule[0].repaymentMan).toBeCloseTo(25);
+            expect(schedule[0].remainingBalanceMan).toBeCloseTo(475);
+            expect(schedule[1].repaymentMan).toBeCloseTo(25);
+        });
+
+        it('融資期間後の年は0を返し、最終回返済後の残債を0にする', () => {
+            const schedule = calculateAnnualLoanSchedule({
+                loanAmountMan: 120,
+                annualInterestRatePercent: 2,
+                loanTermYears: 1,
+            }, 2);
+
+            expect(schedule[0].repaymentMan).toBeGreaterThan(120);
+            expect(schedule[0].remainingBalanceMan).toBe(0);
+            expect(schedule[1]).toEqual({
+                year: 2,
+                principalMan: 0,
+                interestMan: 0,
+                repaymentMan: 0,
+                remainingBalanceMan: 0,
+            });
+        });
+
+        it('借入額0を全期間の返済なしとして扱う', () => {
+            expect(calculateAnnualLoanSchedule({
+                loanAmountMan: 0,
+                annualInterestRatePercent: 0,
+                loanTermYears: 0,
+            }, 2).map(({repaymentMan, remainingBalanceMan}) => ({repaymentMan, remainingBalanceMan})))
+                .toEqual([
+                    {repaymentMan: 0, remainingBalanceMan: 0},
+                    {repaymentMan: 0, remainingBalanceMan: 0},
+                ]);
+        });
     });
 
     it('利息ありの場合、月次元利均等返済を年額へ集計する', () => {

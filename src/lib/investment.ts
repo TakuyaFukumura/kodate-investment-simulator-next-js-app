@@ -42,6 +42,14 @@ export type InvestmentResult = {
     dscr: number | null;
 };
 
+export type AnnualLoanScheduleItem = {
+    year: number;
+    principalMan: number;
+    interestMan: number;
+    repaymentMan: number;
+    remainingBalanceMan: number;
+};
+
 const monetaryFields: InvestmentInputField[] = [
     'purchasePriceMan',
     'monthlyRentMan',
@@ -133,6 +141,97 @@ function sumFields(input: InvestmentInput, fields: InvestmentInputField[]): numb
     return fields.reduce((total, field) => total + input[field], 0);
 }
 
+function calculateMonthlyRepaymentMan(
+    input: Pick<InvestmentInput, 'loanAmountMan' | 'annualInterestRatePercent' | 'loanTermYears'>
+): number {
+    if (input.loanAmountMan === 0) {
+        return 0;
+    }
+
+    const repaymentCount = input.loanTermYears * 12;
+    const monthlyInterestRate = input.annualInterestRatePercent / 1200;
+
+    return monthlyInterestRate === 0
+        ? input.loanAmountMan / repaymentCount
+        : input.loanAmountMan * monthlyInterestRate /
+        (1 - (1 + monthlyInterestRate) ** -repaymentCount);
+}
+
+export function calculateAnnualLoanSchedule(
+    input: Pick<InvestmentInput, 'loanAmountMan' | 'annualInterestRatePercent' | 'loanTermYears'>,
+    years: number
+): AnnualLoanScheduleItem[] {
+    if (!Number.isInteger(years) || years < 1 || years > 50) {
+        throw new Error('返済スケジュールの年数は1〜50年の整数で指定してください。');
+    }
+
+    if (!Number.isFinite(input.loanAmountMan) || input.loanAmountMan < 0) {
+        throw new Error('借入額は0以上の数値で指定してください。');
+    }
+    if (!Number.isFinite(input.annualInterestRatePercent) ||
+        input.annualInterestRatePercent < 0 ||
+        input.annualInterestRatePercent > 30
+    ) {
+        throw new Error('年利は0〜30%の範囲で指定してください。');
+    }
+
+    if (input.loanAmountMan === 0) {
+        return Array.from({length: years}, (_, index) => ({
+            year: index + 1,
+            principalMan: 0,
+            interestMan: 0,
+            repaymentMan: 0,
+            remainingBalanceMan: 0,
+        }));
+    }
+
+    if (!Number.isInteger(input.loanTermYears) || input.loanTermYears < 1 || input.loanTermYears > 50) {
+        throw new Error('返済期間は1〜50年の整数で指定してください。');
+    }
+
+    const repaymentCount = input.loanTermYears * 12;
+    const monthlyInterestRate = input.annualInterestRatePercent / 1200;
+    const monthlyRepayment = calculateMonthlyRepaymentMan(input);
+    let remainingBalanceMan = input.loanAmountMan;
+    let monthsPaid = 0;
+
+    return Array.from({length: years}, (_, index) => {
+        let principalMan = 0;
+        let interestMan = 0;
+        let regularPaymentCount = 0;
+        let finalPaymentMan = 0;
+
+        for (let month = 0; month < 12 && monthsPaid < repaymentCount; month += 1) {
+            const monthlyInterestMan = remainingBalanceMan * monthlyInterestRate;
+            const monthlyPrincipalMan = monthsPaid + 1 === repaymentCount
+                ? remainingBalanceMan
+                : Math.min(remainingBalanceMan, monthlyRepayment - monthlyInterestMan);
+
+            remainingBalanceMan -= monthlyPrincipalMan;
+            monthsPaid += 1;
+            principalMan += monthlyPrincipalMan;
+            interestMan += monthlyInterestMan;
+            if (monthsPaid === repaymentCount) {
+                finalPaymentMan = monthlyPrincipalMan + monthlyInterestMan;
+            } else {
+                regularPaymentCount += 1;
+            }
+        }
+
+        if (monthsPaid === repaymentCount) {
+            remainingBalanceMan = 0;
+        }
+
+        return {
+            year: index + 1,
+            principalMan,
+            interestMan,
+            repaymentMan: monthlyRepayment * regularPaymentCount + finalPaymentMan,
+            remainingBalanceMan,
+        };
+    });
+}
+
 export function calculateInvestment(input: InvestmentInput): InvestmentResult {
     const validationErrors = validateInvestmentInput(input);
     if (validationErrors.length > 0) {
@@ -149,16 +248,7 @@ export function calculateInvestment(input: InvestmentInput): InvestmentResult {
         sumFields(input, acquisitionCostFields) +
         input.renovationCostMan;
 
-    const repaymentCount = input.loanTermYears * 12;
-    const monthlyInterestRate = input.annualInterestRatePercent / 1200;
-    let annualLoanRepaymentMan = 0;
-    if (input.loanAmountMan > 0) {
-        const monthlyRepayment = monthlyInterestRate === 0
-            ? input.loanAmountMan / repaymentCount
-            : input.loanAmountMan * monthlyInterestRate /
-            (1 - (1 + monthlyInterestRate) ** -repaymentCount);
-        annualLoanRepaymentMan = monthlyRepayment * 12;
-    }
+    const annualLoanRepaymentMan = calculateMonthlyRepaymentMan(input) * 12;
 
     const annualCashFlowMan = noiMan - annualLoanRepaymentMan;
 
