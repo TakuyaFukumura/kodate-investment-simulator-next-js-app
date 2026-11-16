@@ -72,12 +72,13 @@ export default function Home() {
                     </p>
                 </div>
 
-                {isLoading ? (
+                {isLoading && (
                     <div
                         className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                        <p role="status">サンプル物件を読み込んでいます...</p>
+                        <output className="block">サンプル物件を読み込んでいます...</output>
                     </div>
-                ) : loadError ? (
+                )}
+                {!isLoading && loadError !== null && (
                     <div
                         className="rounded-xl border border-red-300 bg-red-50 p-6 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100">
                         <p role="alert">サンプルデータを利用できません：{loadError}</p>
@@ -89,9 +90,10 @@ export default function Home() {
                             再読み込み
                         </button>
                     </div>
-                ) : properties.length > 0 ? (
+                )}
+                {!isLoading && loadError === null && properties.length > 0 && (
                     <ScenarioWorkspace properties={properties}/>
-                ) : null}
+                )}
             </div>
         </main>
     );

@@ -1,8 +1,8 @@
 import type {AnnualProjection} from '../../lib/projection';
 
-type ProjectionChartsProps = {
+type ProjectionChartsProps = Readonly<{
     years: AnnualProjection[];
-};
+}>;
 
 const plotTop = 24;
 const plotBottom = 218;

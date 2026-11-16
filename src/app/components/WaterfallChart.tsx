@@ -1,8 +1,8 @@
 import {InvestmentResult} from '../../lib/investment';
 
-type WaterfallChartProps = {
+type WaterfallChartProps = Readonly<{
     result: InvestmentResult;
-};
+}>;
 
 const formatMan = (amount: number) => amount.toLocaleString('ja-JP', {
     minimumFractionDigits: 1,
@@ -82,13 +82,14 @@ export default function WaterfallChart({result}: WaterfallChartProps) {
                     const x = centerX - barWidth / 2;
                     const top = Math.min(yFor(stage.start), yFor(stage.end));
                     const height = Math.max(1, Math.abs(yFor(stage.start) - yFor(stage.end)));
-                    const color = stage.kind === 'deduction'
-                        ? '#f97316'
-                        : stage.kind === 'cash-flow' && stage.end < 0
-                            ? '#dc2626'
-                            : stage.kind === 'total'
-                                ? '#2563eb'
-                                : '#16a34a';
+                    let color = '#16a34a';
+                    if (stage.kind === 'deduction') {
+                        color = '#f97316';
+                    } else if (stage.kind === 'cash-flow' && stage.end < 0) {
+                        color = '#dc2626';
+                    } else if (stage.kind === 'total') {
+                        color = '#2563eb';
+                    }
                     const value = stage.kind === 'deduction'
                         ? stage.start - stage.end
                         : stage.end;

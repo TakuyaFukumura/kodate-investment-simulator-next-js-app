@@ -1,8 +1,8 @@
 import type {ExitScenario} from '../../lib/exit';
 
-type ExitChartProps = {
+type ExitChartProps = Readonly<{
     scenarios: ExitScenario[];
-};
+}>;
 
 const chartWidth = 800;
 const plotTop = 34;

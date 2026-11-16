@@ -14,10 +14,10 @@ type RepairEventValues = {
     amountMan: string;
 };
 
-type ProjectionPanelProps = {
+type ProjectionPanelProps = Readonly<{
     baseInput: InvestmentInput;
     baseInputIsValid: boolean;
-};
+}>;
 
 const inputClassName = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 aria-[invalid=true]:border-red-500 dark:border-slate-600 dark:bg-slate-800';
 
@@ -75,7 +75,7 @@ export default function ProjectionPanel({baseInput, baseInputIsValid}: Projectio
         )));
     };
 
-    const finalProjection = projections ? projections[projections.length - 1] : null;
+    const finalProjection = projections?.at(-1) ?? null;
 
     return (
         <>
@@ -264,10 +264,10 @@ export default function ProjectionPanel({baseInput, baseInputIsValid}: Projectio
 
                     <div className="space-y-5">
                         {!baseInputIsValid && (
-                            <p role="status"
-                               className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                            <output
+                               className="block rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
                                 基本試算の入力が有効になると、長期予測を表示します。
-                            </p>
+                            </output>
                         )}
                         {projections && finalProjection && (
                             <>

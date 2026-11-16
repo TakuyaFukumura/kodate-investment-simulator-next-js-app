@@ -7,10 +7,10 @@ import {calculateExitScenarios, validateExitAssumptions,} from '../../lib/exit';
 import type {AnnualProjection} from '../../lib/projection';
 import ExitChart from './ExitChart';
 
-type ExitPanelProps = {
+type ExitPanelProps = Readonly<{
     baseInput: InvestmentInput;
     projections: AnnualProjection[] | null;
-};
+}>;
 
 const inputClassName = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 aria-[invalid=true]:border-red-500 dark:border-slate-600 dark:bg-slate-800';
 
@@ -180,16 +180,16 @@ export default function ExitPanel({baseInput, projections}: ExitPanelProps) {
 
                 <div className="space-y-5">
                     {!projections && (
-                        <p role="status"
-                           className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                        <output
+                           className="block rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
                             基本試算と運用予測の入力が有効になると、売却結果を表示します。
-                        </p>
+                        </output>
                     )}
                     {projections && errors.length > 0 && (
-                        <p role="status"
-                           className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                        <output
+                           className="block rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
                             売却条件を確認してください。有効な値になるまで売却結果を表示しません。
-                        </p>
+                        </output>
                     )}
                     {scenarios && (
                         <>
@@ -246,9 +246,9 @@ export default function ExitPanel({baseInput, projections}: ExitPanelProps) {
                                 </div>
                             </div>
                             {hasUnavailableSaleYear && (
-                                <p role="status" className="text-sm text-slate-600 dark:text-slate-300">
+                                <output className="block text-sm text-slate-600 dark:text-slate-300">
                                     NOIが0以下の年は売却価格を算出できないため、売却後手残りと総損益を表示していません。
-                                </p>
+                                </output>
                             )}
                         </>
                     )}
