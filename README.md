@@ -58,5 +58,7 @@ npm run build
 - [開発計画書](docs/戸建て投資シミュレータ開発計画書.md)
 - [プロダクト要件定義書](docs/プロダクト要件定義書.md)
 - [無料公開ツール調査レポート](docs/無料公開ツール調査レポート.md)
+- [SonarQube 静的解析レポート](docs/sonarqube-analysis-report.md)
+- [SonarQube 対応指摘一覧](docs/sonarqube-action-items.md)
 - [フェーズ5要件定義書](docs/フェーズ5要件定義書.md)
 - [フェーズ5設計書](docs/フェーズ5設計書.md)

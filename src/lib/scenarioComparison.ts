@@ -147,6 +147,207 @@ function addValidationErrors(
     });
 }
 
+function parseInvestment(
+    value: unknown,
+    scenarioId: ScenarioId,
+    errors: string[]
+): InvestmentInput | null {
+    if (!isRecord(value)) {
+        errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「基本試算」: 条件オブジェクトがありません。`);
+        return null;
+    }
+
+    const invalidFields = investmentFields.filter((field) => !isFiniteNumber(value[field]));
+    invalidFields.forEach((field) => {
+        errors.push(
+            `${SCENARIO_LABELS[scenarioId]}ケース「${investmentFieldLabels[field]}」: 有限の数値を指定してください。`
+        );
+    });
+    if (invalidFields.length > 0) {
+        return null;
+    }
+
+    const investment = Object.fromEntries(
+        investmentFields.map((field) => [field, value[field]])
+    ) as InvestmentInput;
+    addValidationErrors(
+        errors,
+        scenarioId,
+        investmentFieldLabels,
+        validateInvestmentInput(investment)
+    );
+    return investment;
+}
+
+type ParsedRepairEvent = ProjectionAssumptions['repairEvents'][number];
+
+function parseRepairEvent(
+    value: unknown,
+    index: number,
+    scenarioId: ScenarioId,
+    errors: string[]
+): ParsedRepairEvent | null {
+    if (!isRecord(value)) {
+        errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「修繕予定${index + 1}」: オブジェクトが必要です。`);
+        return null;
+    }
+
+    if (typeof value.id !== 'string') {
+        errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「修繕予定${index + 1}の識別情報」: 文字列を指定してください。`);
+        return null;
+    }
+
+    if (typeof value.label !== 'string') {
+        errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「修繕予定${index + 1}の内容」: 文字列を指定してください。`);
+        return null;
+    }
+
+    if (!isFiniteNumber(value.year)) {
+        errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「修繕予定${index + 1}の発生年」: 有限の数値を指定してください。`);
+        return null;
+    }
+
+    if (!isFiniteNumber(value.amountMan)) {
+        errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「修繕予定${index + 1}の金額」: 有限の数値を指定してください。`);
+        return null;
+    }
+
+    return {
+        id: value.id,
+        year: value.year,
+        label: value.label,
+        amountMan: value.amountMan,
+    };
+}
+
+function parseRepairEvents(
+    value: unknown,
+    scenarioId: ScenarioId,
+    errors: string[]
+): ParsedRepairEvent[] | null {
+    if (!Array.isArray(value)) {
+        errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「修繕予定」: 配列を指定してください。`);
+        return null;
+    }
+
+    const events = value.map((event, index) =>
+        parseRepairEvent(event, index, scenarioId, errors)
+    );
+    if (events.includes(null)) {
+        return null;
+    }
+    return events.filter((event): event is ParsedRepairEvent => event !== null);
+}
+
+function parseProjection(
+    value: unknown,
+    scenarioId: ScenarioId,
+    holdingYears: number,
+    errors: string[]
+): Omit<ProjectionAssumptions, 'holdingYears'> | null {
+    if (!isRecord(value)) {
+        errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「運用条件」: 条件オブジェクトがありません。`);
+        return null;
+    }
+
+    const errorCount = errors.length;
+    const rentChange = value.annualRentChangePercent;
+    const costChange = value.annualOperatingCostChangePercent;
+    if (!isFiniteNumber(rentChange)) {
+        errors.push(
+            `${SCENARIO_LABELS[scenarioId]}ケース「${projectionFieldLabels.annualRentChangePercent}」: 有限の数値を指定してください。`
+        );
+    }
+    if (!isFiniteNumber(costChange)) {
+        errors.push(
+            `${SCENARIO_LABELS[scenarioId]}ケース「${projectionFieldLabels.annualOperatingCostChangePercent}」: 有限の数値を指定してください。`
+        );
+    }
+
+    const repairEvents = parseRepairEvents(value.repairEvents, scenarioId, errors);
+    if (errors.length !== errorCount || !isFiniteNumber(rentChange) ||
+        !isFiniteNumber(costChange) || !repairEvents
+    ) {
+        return null;
+    }
+
+    const projection = {
+        annualRentChangePercent: rentChange,
+        annualOperatingCostChangePercent: costChange,
+        repairEvents,
+    };
+    addValidationErrors(
+        errors,
+        scenarioId,
+        {
+            ...projectionFieldLabels,
+            repairYear: '修繕年',
+            repairLabel: '修繕内容',
+            repairAmount: '修繕費',
+        },
+        validateProjectionAssumptions({...projection, holdingYears})
+    );
+    return projection;
+}
+
+function parseExit(
+    value: unknown,
+    scenarioId: ScenarioId,
+    errors: string[]
+): ExitAssumptions | null {
+    if (!isRecord(value)) {
+        errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「売却条件」: 条件オブジェクトがありません。`);
+        return null;
+    }
+
+    const {
+        capRatePercent,
+        stampTaxMan,
+        loanPayoffFeeMan,
+        otherSaleCostMan,
+        useLowPriceVacantPropertySpecial,
+    } = value;
+    const invalidFields: (keyof ExitAssumptions)[] = [];
+    if (!isFiniteNumber(capRatePercent)) {
+        invalidFields.push('capRatePercent');
+    }
+    if (!isFiniteNumber(stampTaxMan)) {
+        invalidFields.push('stampTaxMan');
+    }
+    if (!isFiniteNumber(loanPayoffFeeMan)) {
+        invalidFields.push('loanPayoffFeeMan');
+    }
+    if (!isFiniteNumber(otherSaleCostMan)) {
+        invalidFields.push('otherSaleCostMan');
+    }
+    if (typeof useLowPriceVacantPropertySpecial !== 'boolean') {
+        invalidFields.push('useLowPriceVacantPropertySpecial');
+    }
+    invalidFields.forEach((field) => {
+        errors.push(
+            `${SCENARIO_LABELS[scenarioId]}ケース「${exitFieldLabels[field]}」: 値の形式が不正です。`
+        );
+    });
+    if (invalidFields.length > 0) {
+        return null;
+    }
+
+    const exit = {
+        capRatePercent: capRatePercent as number,
+        stampTaxMan: stampTaxMan as number,
+        loanPayoffFeeMan: loanPayoffFeeMan as number,
+        otherSaleCostMan: otherSaleCostMan as number,
+        useLowPriceVacantPropertySpecial: useLowPriceVacantPropertySpecial as boolean,
+    };
+    addValidationErrors(
+        errors,
+        scenarioId,
+        exitFieldLabels,
+        validateExitAssumptions(exit)
+    );
+    return exit;
+}
+
 function parseScenarioConditions(
     value: unknown,
     scenarioId: ScenarioId,
@@ -158,167 +359,17 @@ function parseScenarioConditions(
         return null;
     }
 
-    const startErrorCount = errors.length;
+    const errorCount = errors.length;
     const propertyName = value.propertyName;
     if (typeof propertyName !== 'string' || propertyName.trim() === '') {
         errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「物件名」: 文字列を入力してください。`);
     }
 
-    const investmentValue = value.investment;
-    let investment: InvestmentInput | null = null;
-    if (!isRecord(investmentValue)) {
-        errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「基本試算」: 条件オブジェクトがありません。`);
-    } else {
-        const invalidFields = investmentFields.filter((field) =>
-            !isFiniteNumber(investmentValue[field])
-        );
-        invalidFields.forEach((field) => {
-            errors.push(
-                `${SCENARIO_LABELS[scenarioId]}ケース「${investmentFieldLabels[field]}」: 有限の数値を指定してください。`
-            );
-        });
-        if (invalidFields.length === 0) {
-            investment = Object.fromEntries(
-                investmentFields.map((field) => [field, investmentValue[field]])
-            ) as InvestmentInput;
-            addValidationErrors(
-                errors,
-                scenarioId,
-                investmentFieldLabels,
-                validateInvestmentInput(investment)
-            );
-        }
-    }
-
-    const projectionValue = value.projection;
-    let projection: Omit<ProjectionAssumptions, 'holdingYears'> | null = null;
-    if (!isRecord(projectionValue)) {
-        errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「運用条件」: 条件オブジェクトがありません。`);
-    } else {
-        const rentChange = projectionValue.annualRentChangePercent;
-        const costChange = projectionValue.annualOperatingCostChangePercent;
-        const repairEventsValue = projectionValue.repairEvents;
-        const projectionErrorCount = errors.length;
-        if (!isFiniteNumber(rentChange)) {
-            errors.push(
-                `${SCENARIO_LABELS[scenarioId]}ケース「${projectionFieldLabels.annualRentChangePercent}」: 有限の数値を指定してください。`
-            );
-        }
-        if (!isFiniteNumber(costChange)) {
-            errors.push(
-                `${SCENARIO_LABELS[scenarioId]}ケース「${projectionFieldLabels.annualOperatingCostChangePercent}」: 有限の数値を指定してください。`
-            );
-        }
-        const repairEvents = Array.isArray(repairEventsValue)
-            ? repairEventsValue.flatMap((event, index) => {
-                if (!isRecord(event)) {
-                    errors.push(
-                        `${SCENARIO_LABELS[scenarioId]}ケース「修繕予定${index + 1}」: オブジェクトが必要です。`
-                    );
-                    return [];
-                }
-                if (typeof event.id !== 'string') {
-                    errors.push(
-                        `${SCENARIO_LABELS[scenarioId]}ケース「修繕予定${index + 1}の識別情報」: 文字列を指定してください。`
-                    );
-                    return [];
-                }
-                if (typeof event.label !== 'string') {
-                    errors.push(
-                        `${SCENARIO_LABELS[scenarioId]}ケース「修繕予定${index + 1}の内容」: 文字列を指定してください。`
-                    );
-                    return [];
-                }
-                if (!isFiniteNumber(event.year)) {
-                    errors.push(
-                        `${SCENARIO_LABELS[scenarioId]}ケース「修繕予定${index + 1}の発生年」: 有限の数値を指定してください。`
-                    );
-                    return [];
-                }
-                if (!isFiniteNumber(event.amountMan)) {
-                    errors.push(
-                        `${SCENARIO_LABELS[scenarioId]}ケース「修繕予定${index + 1}の金額」: 有限の数値を指定してください。`
-                    );
-                    return [];
-                }
-                return [{
-                    id: event.id,
-                    year: event.year,
-                    label: event.label,
-                    amountMan: event.amountMan,
-                }];
-            })
-            : [];
-        if (!Array.isArray(repairEventsValue)) {
-            errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「修繕予定」: 配列を指定してください。`);
-        }
-        if (errors.length === projectionErrorCount &&
-            isFiniteNumber(rentChange) &&
-            isFiniteNumber(costChange)
-        ) {
-            projection = {
-                annualRentChangePercent: rentChange,
-                annualOperatingCostChangePercent: costChange,
-                repairEvents,
-            };
-            addValidationErrors(
-                errors,
-                scenarioId,
-                {
-                    ...projectionFieldLabels,
-                    repairYear: '修繕年',
-                    repairLabel: '修繕内容',
-                    repairAmount: '修繕費',
-                },
-                validateProjectionAssumptions({...projection, holdingYears})
-            );
-        }
-    }
-
-    const exitValue = value.exit;
-    let exit: ExitAssumptions | null = null;
-    if (!isRecord(exitValue)) {
-        errors.push(`${SCENARIO_LABELS[scenarioId]}ケース「売却条件」: 条件オブジェクトがありません。`);
-    } else {
-        const {
-            capRatePercent,
-            stampTaxMan,
-            loanPayoffFeeMan,
-            otherSaleCostMan,
-            useLowPriceVacantPropertySpecial,
-        } = exitValue;
-        const invalidExitFields = [
-            ...(isFiniteNumber(capRatePercent) ? [] : ['capRatePercent']),
-            ...(isFiniteNumber(stampTaxMan) ? [] : ['stampTaxMan']),
-            ...(isFiniteNumber(loanPayoffFeeMan) ? [] : ['loanPayoffFeeMan']),
-            ...(isFiniteNumber(otherSaleCostMan) ? [] : ['otherSaleCostMan']),
-            ...(typeof useLowPriceVacantPropertySpecial === 'boolean'
-                ? [] : ['useLowPriceVacantPropertySpecial']),
-        ] as (keyof ExitAssumptions)[];
-        invalidExitFields.forEach((field) => {
-            errors.push(
-                `${SCENARIO_LABELS[scenarioId]}ケース「${exitFieldLabels[field]}」: 値の形式が不正です。`
-            );
-        });
-        if (invalidExitFields.length === 0) {
-            exit = {
-                capRatePercent: capRatePercent as number,
-                stampTaxMan: stampTaxMan as number,
-                loanPayoffFeeMan: loanPayoffFeeMan as number,
-                otherSaleCostMan: otherSaleCostMan as number,
-                useLowPriceVacantPropertySpecial: useLowPriceVacantPropertySpecial as boolean,
-            };
-            addValidationErrors(
-                errors,
-                scenarioId,
-                exitFieldLabels,
-                validateExitAssumptions(exit)
-            );
-        }
-    }
-
-    if (errors.length !== startErrorCount || !investment || !projection || !exit ||
-        typeof propertyName !== 'string'
+    const investment = parseInvestment(value.investment, scenarioId, errors);
+    const projection = parseProjection(value.projection, scenarioId, holdingYears, errors);
+    const exit = parseExit(value.exit, scenarioId, errors);
+    if (errors.length !== errorCount || typeof propertyName !== 'string' ||
+        !investment || !projection || !exit
     ) {
         return null;
     }

@@ -9,7 +9,12 @@ import {validateExitAssumptions} from '../../lib/exit';
 import type {ProjectionValidationError} from '../../lib/projection';
 import {calculateProjection, validateProjectionAssumptions} from '../../lib/projection';
 import type {PropertyScenario} from '../../lib/propertyCsv';
-import type {ScenarioConditions, ScenarioConditionsById, ScenarioId,} from '../../lib/scenarioComparison';
+import type {
+    ScenarioConditions,
+    ScenarioConditionsById,
+    ScenarioId,
+    ScenarioResults,
+} from '../../lib/scenarioComparison';
 import {
     calculateScenarioResults,
     createScenarioFilename,
@@ -121,6 +126,19 @@ const fieldGroups: { title: string; fields: InvestmentInputField[] }[] = [
     },
     {title: '融資条件', fields: ['loanAmountMan', 'annualInterestRatePercent', 'loanTermYears']},
 ];
+
+const inputMinimums: Partial<Record<InvestmentInputField, string>> = {
+    purchasePriceMan: '0.1',
+    loanTermYears: '1',
+};
+
+const inputMaximums: Partial<Record<InvestmentInputField, string>> = {
+    annualInterestRatePercent: '30',
+    vacancyMonths: '12',
+    loanTermYears: '50',
+};
+
+const metricRows = ['NOI', '年間運営CF', '売却後手残り', '総損益', '単純損益率'] as const;
 
 const inputClassName = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 aria-[invalid=true]:border-red-500 dark:border-slate-600 dark:bg-slate-800';
 const cardClassName = 'rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6';
@@ -287,6 +305,45 @@ function getExitError(
     return errors.exit.find((error) => error.field === field)?.message;
 }
 
+function getProjectionErrorLabel(
+    field: ProjectionValidationError['field'],
+    eventIndex: number
+): string {
+    switch (field) {
+        case 'holdingYears':
+            return '保有期間';
+        case 'annualRentChangePercent':
+            return '家賃の年間変化率';
+        case 'annualOperatingCostChangePercent':
+            return '運営費の年間変化率';
+        case 'repairYear':
+            return `修繕予定${eventIndex}の発生年`;
+        case 'repairLabel':
+            return `修繕予定${eventIndex}の内容`;
+        case 'repairAmount':
+            return `修繕予定${eventIndex}の金額`;
+    }
+}
+
+function formatScenarioMetric(
+    metricLabel: (typeof metricRows)[number],
+    projection: ScenarioResults['projections'][number] | undefined,
+    exit: ScenarioResults['exits'][number] | undefined
+): string {
+    switch (metricLabel) {
+        case 'NOI':
+            return formatMan(projection?.noiMan ?? null);
+        case '年間運営CF':
+            return formatMan(projection?.cashFlowMan ?? null);
+        case '売却後手残り':
+            return formatMan(exit?.netSaleProceedsMan ?? null);
+        case '総損益':
+            return formatMan(exit?.totalProfitMan ?? null);
+        case '単純損益率':
+            return formatPercent(exit?.simpleReturnPercent ?? null);
+    }
+}
+
 function getScenarioErrorSummary(
     scenarioId: ScenarioId,
     form: ScenarioForm,
@@ -300,12 +357,7 @@ function getScenarioErrorSummary(
                 1,
                 form.repairEvents.findIndex((event) => event.id === eventId) + 1
             );
-            const label = field === 'holdingYears' ? '保有期間'
-                : field === 'annualRentChangePercent' ? '家賃の年間変化率'
-                    : field === 'annualOperatingCostChangePercent' ? '運営費の年間変化率'
-                        : field === 'repairYear' ? `修繕予定${eventIndex}の発生年`
-                            : field === 'repairLabel' ? `修繕予定${eventIndex}の内容`
-                                : `修繕予定${eventIndex}の金額`;
+            const label = getProjectionErrorLabel(field, eventIndex);
             return `${label}: ${message}`;
         }),
         ...errors.exit.map(({field, message}) => {
@@ -347,7 +399,9 @@ function formatTableMan(amount: number | null): string {
     return amount === null ? '—' : formatMan(amount);
 }
 
-export default function ScenarioWorkspace({properties}: { properties: PropertyScenario[] }) {
+export default function ScenarioWorkspace(
+    {properties}: Readonly<{ properties: PropertyScenario[] }>
+) {
     const [cases, setCases] = useState(() => createInitialScenarioForms(properties));
     const [holdingYears, setHoldingYears] = useState('30');
     const [selectedYear, setSelectedYear] = useState(30);
@@ -421,7 +475,7 @@ export default function ScenarioWorkspace({properties}: { properties: PropertySc
 
     const handleCaseTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
         const currentIndex = SCENARIO_IDS.indexOf(activeCase);
-        let nextIndex = currentIndex;
+        let nextIndex: number;
         if (event.key === 'ArrowRight') {
             nextIndex = (currentIndex + 1) % SCENARIO_IDS.length;
         } else if (event.key === 'ArrowLeft') {
@@ -583,8 +637,6 @@ export default function ScenarioWorkspace({properties}: { properties: PropertySc
         }));
     };
 
-    const metricRows = ['NOI', '年間運営CF', '売却後手残り', '総損益', '単純損益率'];
-
     return (
         <div className="space-y-6">
             <section aria-labelledby="scenario-input-heading" className={cardClassName}>
@@ -735,12 +787,8 @@ export default function ScenarioWorkspace({properties}: { properties: PropertySc
                                     const definition = inputDefinitions[field];
                                     const error = getInvestmentError(currentErrors, field);
                                     const inputId = `input-${activeCase}-${field}`;
-                                    const min = field === 'purchasePriceMan' ? '0.1'
-                                        : field === 'annualInterestRatePercent' || field === 'vacancyMonths' ? '0'
-                                            : field === 'loanTermYears' ? '1' : '0';
-                                    const max = field === 'annualInterestRatePercent' ? '30'
-                                        : field === 'vacancyMonths' ? '12'
-                                            : field === 'loanTermYears' ? '50' : undefined;
+                                    const min = inputMinimums[field] ?? '0';
+                                    const max = inputMaximums[field];
                                     return (
                                         <div key={field}>
                                             <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium">
@@ -1113,15 +1161,7 @@ export default function ScenarioWorkspace({properties}: { properties: PropertySc
                                         {results.map((result) => {
                                             const projection = result.projections.find(({year}) => year === selectedYear);
                                             const exit = result.exits.find(({year}) => year === selectedYear);
-                                            const value = metricLabel === 'NOI'
-                                                ? formatMan(projection?.noiMan ?? null)
-                                                : metricLabel === '年間運営CF'
-                                                    ? formatMan(projection?.cashFlowMan ?? null)
-                                                    : metricLabel === '売却後手残り'
-                                                        ? formatMan(exit?.netSaleProceedsMan ?? null)
-                                                        : metricLabel === '総損益'
-                                                            ? formatMan(exit?.totalProfitMan ?? null)
-                                                            : formatPercent(exit?.simpleReturnPercent ?? null);
+                                            const value = formatScenarioMetric(metricLabel, projection, exit);
                                             return (
                                                 <div key={result.id} className="flex justify-between gap-2 text-sm">
                                                     <dt className="text-slate-600 dark:text-slate-300">
@@ -1252,10 +1292,10 @@ export default function ScenarioWorkspace({properties}: { properties: PropertySc
                         </div>
                     </>
                 ) : (
-                    <p role="status"
+                    <output
                        className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
                         3ケースすべての基本試算・運用・売却条件が有効になると、比較結果を表示します。
-                    </p>
+                    </output>
                 )}
                 {activeProjections && (
                     <section aria-labelledby="active-projection-chart-heading">

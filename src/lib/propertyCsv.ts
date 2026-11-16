@@ -81,92 +81,138 @@ type ParsedCsvRow = {
     lineNumber: number;
 };
 
+type CsvParserState = {
+    rows: ParsedCsvRow[];
+    row: string[];
+    field: string;
+    insideQuotes: boolean;
+    quoteClosed: boolean;
+    lineNumber: number;
+    rowStartLine: number;
+};
+
+function finishCsvRow(state: CsvParserState): void {
+    state.row.push(state.field);
+    state.rows.push({cells: state.row, lineNumber: state.rowStartLine});
+    state.row = [];
+    state.field = '';
+    state.quoteClosed = false;
+    state.lineNumber += 1;
+    state.rowStartLine = state.lineNumber;
+}
+
+function consumeQuotedCsvCharacter(
+    text: string,
+    index: number,
+    state: CsvParserState
+): boolean {
+    const character = text[index];
+    if (character !== '"') {
+        state.field += character;
+        if (character === '\n') {
+            state.lineNumber += 1;
+        }
+        return false;
+    }
+
+    if (text[index + 1] === '"') {
+        state.field += '"';
+        return true;
+    }
+
+    state.insideQuotes = false;
+    state.quoteClosed = true;
+    return false;
+}
+
+function consumeClosedQuoteCsvCharacter(
+    text: string,
+    index: number,
+    state: CsvParserState
+): boolean {
+    const character = text[index];
+    if (character === ',') {
+        state.row.push(state.field);
+        state.field = '';
+        state.quoteClosed = false;
+        return false;
+    }
+
+    if (character !== '\r' && character !== '\n') {
+        throw new Error(`CSV ${state.lineNumber}行目: 閉じ引用符の後に予期しない文字があります。`);
+    }
+
+    finishCsvRow(state);
+    return character === '\r' && text[index + 1] === '\n';
+}
+
+function consumeUnquotedCsvCharacter(
+    text: string,
+    index: number,
+    state: CsvParserState
+): boolean {
+    const character = text[index];
+    if (character === '"') {
+        if (state.field.length > 0) {
+            throw new Error(`CSV ${state.lineNumber}行目: 引用符の位置が不正です。`);
+        }
+        state.insideQuotes = true;
+        return false;
+    }
+
+    if (character === ',') {
+        state.row.push(state.field);
+        state.field = '';
+        return false;
+    }
+
+    if (character === '\r' || character === '\n') {
+        finishCsvRow(state);
+        return character === '\r' && text[index + 1] === '\n';
+    }
+
+    state.field += character;
+    return false;
+}
+
 function parseCsvRows(csvText: string): ParsedCsvRow[] {
-    const text = csvText.charCodeAt(0) === 0xfeff ? csvText.slice(1) : csvText;
-    const rows: ParsedCsvRow[] = [];
-    let row: string[] = [];
-    let field = '';
-    let insideQuotes = false;
-    let quoteClosed = false;
-    let lineNumber = 1;
-    let rowStartLine = 1;
+    const text = csvText.codePointAt(0) === 0xfeff ? csvText.slice(1) : csvText;
+    const state: CsvParserState = {
+        rows: [],
+        row: [],
+        field: '',
+        insideQuotes: false,
+        quoteClosed: false,
+        lineNumber: 1,
+        rowStartLine: 1,
+    };
 
+    let skipNextCharacter = false;
     for (let index = 0; index < text.length; index += 1) {
-        const character = text[index];
-
-        if (insideQuotes) {
-            if (character === '"') {
-                if (text[index + 1] === '"') {
-                    field += '"';
-                    index += 1;
-                } else {
-                    insideQuotes = false;
-                    quoteClosed = true;
-                }
-            } else {
-                field += character;
-                if (character === '\n') {
-                    lineNumber += 1;
-                }
-            }
+        if (skipNextCharacter) {
+            skipNextCharacter = false;
             continue;
         }
 
-        if (quoteClosed) {
-            if (character === ',') {
-                row.push(field);
-                field = '';
-                quoteClosed = false;
-            } else if (character === '\r' || character === '\n') {
-                row.push(field);
-                rows.push({cells: row, lineNumber: rowStartLine});
-                row = [];
-                field = '';
-                quoteClosed = false;
-                if (character === '\r' && text[index + 1] === '\n') {
-                    index += 1;
-                }
-                lineNumber += 1;
-                rowStartLine = lineNumber;
-            } else {
-                throw new Error(`CSV ${lineNumber}行目: 閉じ引用符の後に予期しない文字があります。`);
-            }
-            continue;
-        }
-
-        if (character === '"') {
-            if (field.length > 0) {
-                throw new Error(`CSV ${lineNumber}行目: 引用符の位置が不正です。`);
-            }
-            insideQuotes = true;
-        } else if (character === ',') {
-            row.push(field);
-            field = '';
-        } else if (character === '\r' || character === '\n') {
-            row.push(field);
-            rows.push({cells: row, lineNumber: rowStartLine});
-            row = [];
-            field = '';
-            if (character === '\r' && text[index + 1] === '\n') {
-                index += 1;
-            }
-            lineNumber += 1;
-            rowStartLine = lineNumber;
+        if (state.insideQuotes) {
+            skipNextCharacter = consumeQuotedCsvCharacter(text, index, state);
+        } else if (state.quoteClosed) {
+            skipNextCharacter = consumeClosedQuoteCsvCharacter(text, index, state);
         } else {
-            field += character;
+            skipNextCharacter = consumeUnquotedCsvCharacter(text, index, state);
         }
     }
 
-    if (insideQuotes) {
-        throw new Error(`CSV ${lineNumber}行目: 引用符が閉じられていません。`);
+    if (state.insideQuotes) {
+        throw new Error(`CSV ${state.lineNumber}行目: 引用符が閉じられていません。`);
     }
 
-    if (field.length > 0 || row.length > 0 || quoteClosed) {
-        row.push(field);
-        rows.push({cells: row, lineNumber: rowStartLine});
+    if (state.field.length > 0 || state.row.length > 0 || state.quoteClosed) {
+        state.row.push(state.field);
+        state.rows.push({cells: state.row, lineNumber: state.rowStartLine});
     }
 
-    return rows;
+    return state.rows;
 }
 
 export function parsePropertyCsv(csvText: string): PropertyScenario[] {

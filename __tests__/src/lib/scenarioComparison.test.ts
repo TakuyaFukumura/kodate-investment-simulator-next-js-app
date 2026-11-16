@@ -156,6 +156,139 @@ describe('parseScenarioBundle', () => {
         }
     });
 
+    it('条件グループがオブジェクトでない場合は個別に拒否する', () => {
+        const invalidBundle = {
+            ...bundle,
+            cases: {
+                ...conditions,
+                baseline: {
+                    ...conditions.baseline,
+                    investment: null,
+                    projection: null,
+                    exit: null,
+                },
+            },
+        };
+        const parsed = parseScenarioBundle(invalidBundle);
+
+        expect(parsed.success).toBe(false);
+        if (!parsed.success) {
+            expect(parsed.errors).toEqual(expect.arrayContaining([
+                expect.stringContaining('基準ケース「基本試算」'),
+                expect.stringContaining('基準ケース「運用条件」'),
+                expect.stringContaining('基準ケース「売却条件」'),
+            ]));
+        }
+    });
+
+    it('修繕予定の各形式不正を報告する', () => {
+        const repairEvents = [
+            null,
+            {id: 1, label: '屋根', year: 1, amountMan: 1},
+            {id: 'repair-2', label: 1, year: 1, amountMan: 1},
+            {id: 'repair-3', label: '屋根', year: '1', amountMan: 1},
+            {id: 'repair-4', label: '屋根', year: 1, amountMan: '1'},
+            {id: 'repair-5', label: '屋根', year: 1, amountMan: 1},
+        ];
+        const invalidBundle = {
+            ...bundle,
+            cases: {
+                ...conditions,
+                baseline: {
+                    ...conditions.baseline,
+                    projection: {
+                        ...conditions.baseline.projection,
+                        repairEvents,
+                    },
+                },
+            },
+        };
+        const parsed = parseScenarioBundle(invalidBundle);
+
+        expect(parsed.success).toBe(false);
+        if (!parsed.success) {
+            expect(parsed.errors).toEqual(expect.arrayContaining([
+                expect.stringContaining('修繕予定1」: オブジェクトが必要'),
+                expect.stringContaining('修繕予定2の識別情報」: 文字列を指定してください'),
+                expect.stringContaining('修繕予定3の内容」: 文字列を指定してください'),
+                expect.stringContaining('修繕予定4の発生年」: 有限の数値を指定してください'),
+                expect.stringContaining('修繕予定5の金額」: 有限の数値を指定してください'),
+            ]));
+        }
+
+        const nonArrayBundle = {
+            ...bundle,
+            cases: {
+                ...conditions,
+                baseline: {
+                    ...conditions.baseline,
+                    projection: {
+                        ...conditions.baseline.projection,
+                        repairEvents: null,
+                    },
+                },
+            },
+        };
+        const nonArrayParsed = parseScenarioBundle(nonArrayBundle);
+
+        expect(nonArrayParsed.success).toBe(false);
+        if (!nonArrayParsed.success) {
+            expect(nonArrayParsed.errors).toContain(
+                '基準ケース「修繕予定」: 配列を指定してください。'
+            );
+        }
+
+        const validBundle = {
+            ...bundle,
+            cases: {
+                ...conditions,
+                baseline: {
+                    ...conditions.baseline,
+                    projection: {
+                        ...conditions.baseline.projection,
+                        repairEvents: [{id: 'repair-1', label: '屋根', year: 1, amountMan: 1}],
+                    },
+                },
+            },
+        };
+        expect(parseScenarioBundle(validBundle)).toEqual({
+            success: true,
+            bundle: validBundle,
+        });
+    });
+
+    it('売却条件の各形式不正を報告する', () => {
+        const invalidBundle = {
+            ...bundle,
+            cases: {
+                ...conditions,
+                baseline: {
+                    ...conditions.baseline,
+                    exit: {
+                        ...conditions.baseline.exit,
+                        capRatePercent: '10',
+                        stampTaxMan: '1',
+                        loanPayoffFeeMan: null,
+                        otherSaleCostMan: Number.NaN,
+                        useLowPriceVacantPropertySpecial: 'false',
+                    },
+                },
+            },
+        };
+        const parsed = parseScenarioBundle(invalidBundle);
+
+        expect(parsed.success).toBe(false);
+        if (!parsed.success) {
+            expect(parsed.errors).toEqual(expect.arrayContaining([
+                expect.stringContaining('想定売却利回り」: 値の形式が不正'),
+                expect.stringContaining('売却時の印紙税」: 値の形式が不正'),
+                expect.stringContaining('ローン完済手数料」: 値の形式が不正'),
+                expect.stringContaining('その他売却費用」: 値の形式が不正'),
+                expect.stringContaining('低廉な空家等の媒介特例」: 値の形式が不正'),
+            ]));
+        }
+    });
+
     it('修繕予定に不正値があれば対象ケースと項目を特定する', () => {
         const invalidBundle = {
             ...bundle,

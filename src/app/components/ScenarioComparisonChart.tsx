@@ -1,9 +1,9 @@
 import type {ScenarioResults} from '../../lib/scenarioComparison';
 import {SCENARIO_IDS, SCENARIO_LABELS} from '../../lib/scenarioComparison';
 
-type ScenarioComparisonChartProps = {
+type ScenarioComparisonChartProps = Readonly<{
     results: ScenarioResults[];
-};
+}>;
 
 const colors = {
     baseline: '#2563eb',
