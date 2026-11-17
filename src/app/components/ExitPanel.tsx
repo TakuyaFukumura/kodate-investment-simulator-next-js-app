@@ -6,13 +6,12 @@ import type {ExitAssumptions, ExitScenario} from '../../lib/exit';
 import {calculateExitScenarios, validateExitAssumptions,} from '../../lib/exit';
 import type {AnnualProjection} from '../../lib/projection';
 import ExitChart from './ExitChart';
+import {inputClassName} from './controlStyles';
 
 type ExitPanelProps = Readonly<{
     baseInput: InvestmentInput;
     projections: AnnualProjection[] | null;
 }>;
-
-const inputClassName = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 aria-[invalid=true]:border-red-500 dark:border-slate-600 dark:bg-slate-800';
 
 function parseNumber(value: string): number {
     return value.trim() === '' ? Number.NaN : Number(value);
@@ -126,10 +125,13 @@ export default function ExitPanel({baseInput, projections}: ExitPanelProps) {
                                 value={capRatePercent}
                                 onChange={(event) => setCapRatePercent(event.target.value)}
                                 aria-invalid={Boolean(getErrorMessage(errors, 'capRatePercent'))}
+                                aria-describedby={
+                                    getErrorMessage(errors, 'capRatePercent') ? 'exit-cap-rate-error' : undefined
+                                }
                                 className={inputClassName}
                             />
                             {getErrorMessage(errors, 'capRatePercent') && (
-                                <p className="mt-1 text-xs text-red-700 dark:text-red-300">
+                                <p id="exit-cap-rate-error" className="mt-1 text-xs text-red-700 dark:text-red-300">
                                     {getErrorMessage(errors, 'capRatePercent')}
                                 </p>
                             )}
@@ -155,9 +157,14 @@ export default function ExitPanel({baseInput, projections}: ExitPanelProps) {
                                         value={value}
                                         onChange={(event) => onChange(event.target.value)}
                                         aria-invalid={Boolean(error)}
+                                        aria-describedby={error ? `${id}-error` : undefined}
                                         className={inputClassName}
                                     />
-                                    {error && <p className="mt-1 text-xs text-red-700 dark:text-red-300">{error}</p>}
+                                    {error && (
+                                        <p id={`${id}-error`} className="mt-1 text-xs text-red-700 dark:text-red-300">
+                                            {error}
+                                        </p>
+                                    )}
                                 </div>
                             );
                         })}

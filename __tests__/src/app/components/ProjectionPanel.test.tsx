@@ -54,6 +54,10 @@ describe('ProjectionPanel', () => {
         fireEvent.change(screen.getByLabelText('発生年'), {target: {value: '2'}});
 
         expect(screen.getByText('修繕年は1〜1年の整数で入力してください。')).toBeInTheDocument();
+        expect(screen.getByLabelText('発生年')).toHaveAttribute(
+            'aria-describedby',
+            'repair-year-repair-1-error'
+        );
         expect(screen.queryByRole('table')).not.toBeInTheDocument();
     });
 });

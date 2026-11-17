@@ -1,4 +1,5 @@
 import type {ExitScenario} from '../../lib/exit';
+import {ChartValueAxis, getAxisRange, getAxisTicks} from './ChartAxis';
 
 type ExitChartProps = Readonly<{
     scenarios: ExitScenario[];
@@ -8,6 +9,9 @@ const chartWidth = 800;
 const plotTop = 34;
 const plotBottom = 218;
 const plotHeight = plotBottom - plotTop;
+const plotLeft = 60;
+const plotRight = chartWidth - 20;
+const plotWidth = plotRight - plotLeft;
 
 function formatMan(amount: number): string {
     return amount.toLocaleString('ja-JP', {minimumFractionDigits: 1, maximumFractionDigits: 1});
@@ -33,11 +37,13 @@ export default function ExitChart({scenarios}: ExitChartProps) {
 
     const minimumProfit = Math.min(0, ...validScenarios.map(({totalProfitMan}) => totalProfitMan));
     const maximumProfit = Math.max(0, ...validScenarios.map(({totalProfitMan}) => totalProfitMan));
-    const profitRange = maximumProfit - minimumProfit || 1;
-    const zeroY = plotTop + (maximumProfit / profitRange) * plotHeight;
-    const stepWidth = chartWidth / scenarios.length;
+    const profitAxis = getAxisRange(minimumProfit, maximumProfit);
+    const profitRange = profitAxis.maximum - profitAxis.minimum;
+    const stepWidth = plotWidth / scenarios.length;
     const barWidth = Math.min(28, stepWidth * 0.65);
-    const yFor = (value: number) => plotTop + ((maximumProfit - value) / profitRange) * plotHeight;
+    const yFor = (value: number) => plotTop + ((profitAxis.maximum - value) / profitRange) * plotHeight;
+    const zeroY = yFor(0);
+    const profitTicks = getAxisTicks(profitAxis.minimum, profitAxis.maximum);
     const labelInterval = getYearLabelInterval(scenarios.length);
 
     return (
@@ -51,17 +57,18 @@ export default function ExitChart({scenarios}: ExitChartProps) {
                     viewBox={`0 0 ${chartWidth} 270`}
                 >
                     <title>保有年数ごとの売却後総損益</title>
-                    <text x="20" y="16" fill="currentColor" fontSize="11">
-                        最大 {formatMan(maximumProfit)}
-                    </text>
-                    <line x1="20" x2={chartWidth - 20} y1={zeroY} y2={zeroY} stroke="currentColor" opacity="0.35"/>
-                    <text x="20" y={zeroY - 5} fill="currentColor" fontSize="11">0</text>
+                    <ChartValueAxis
+                        ticks={profitTicks}
+                        yFor={yFor}
+                        plotLeft={plotLeft}
+                        plotRight={plotRight}
+                    />
                     {scenarios.map((scenario, index) => {
                         if (scenario.totalProfitMan === null) {
                             return null;
                         }
 
-                        const centerX = stepWidth * index + stepWidth / 2;
+                        const centerX = plotLeft + stepWidth * index + stepWidth / 2;
                         const valueY = yFor(scenario.totalProfitMan);
                         const top = Math.min(zeroY, valueY);
                         const height = Math.max(1, Math.abs(zeroY - valueY));
@@ -92,9 +99,6 @@ export default function ExitChart({scenarios}: ExitChartProps) {
                             </g>
                         );
                     })}
-                    <text x="20" y="233" fill="currentColor" fontSize="11">
-                        最小 {formatMan(minimumProfit)}
-                    </text>
                 </svg>
             </div>
             <figcaption className="mt-2 text-xs text-slate-600 dark:text-slate-300">

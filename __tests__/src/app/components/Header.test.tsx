@@ -44,7 +44,7 @@ describe('Header', () => {
         it('ヘッダータイトルが表示される', () => {
             renderWithProvider();
 
-            expect(screen.getByText('戸建て投資シミュレータ')).toBeInTheDocument();
+            expect(screen.getByText('kodate')).toBeInTheDocument();
         });
 
         it('ヘッダーのHTML構造が正しい', () => {
@@ -255,7 +255,7 @@ describe('Header', () => {
             renderWithProvider();
 
             const header = screen.getByRole('banner');
-            expect(header).toHaveClass('bg-white/80', 'dark:bg-gray-800/80');
+            expect(header).toHaveClass('bg-white/80', 'dark:bg-slate-900/80');
         });
 
         it('ボタンに適切なスタイルクラスが適用される', () => {

@@ -1,5 +1,6 @@
 import type {ScenarioResults} from '../../lib/scenarioComparison';
 import {SCENARIO_IDS, SCENARIO_LABELS} from '../../lib/scenarioComparison';
+import {ChartValueAxis, getAxisRange, getAxisTicks} from './ChartAxis';
 
 type ScenarioComparisonChartProps = Readonly<{
     results: ScenarioResults[];
@@ -15,6 +16,14 @@ const chartWidth = 800;
 const plotTop = 34;
 const plotBottom = 218;
 const plotHeight = plotBottom - plotTop;
+const plotLeft = 60;
+const plotRight = chartWidth - 20;
+const plotWidth = plotRight - plotLeft;
+const lineStyles = {
+    baseline: undefined,
+    optimistic: '6 4',
+    cautious: '2 3',
+} as const;
 
 function formatMan(amount: number): string {
     return amount.toLocaleString('ja-JP', {minimumFractionDigits: 1, maximumFractionDigits: 1});
@@ -40,12 +49,13 @@ export default function ScenarioComparisonChart({results}: ScenarioComparisonCha
 
     const minimumProfit = Math.min(0, ...validExits.map(({totalProfitMan}) => totalProfitMan));
     const maximumProfit = Math.max(0, ...validExits.map(({totalProfitMan}) => totalProfitMan));
-    const profitRange = maximumProfit - minimumProfit || 1;
-    const zeroY = plotTop + (maximumProfit / profitRange) * plotHeight;
+    const profitAxis = getAxisRange(minimumProfit, maximumProfit);
+    const profitRange = profitAxis.maximum - profitAxis.minimum;
     const yearCount = Math.max(...results.map(({exits}) => exits.length));
-    const stepWidth = chartWidth / yearCount;
+    const stepWidth = plotWidth / yearCount;
     const labelInterval = getYearLabelInterval(yearCount);
-    const yFor = (value: number) => plotTop + ((maximumProfit - value) / profitRange) * plotHeight;
+    const yFor = (value: number) => plotTop + ((profitAxis.maximum - value) / profitRange) * plotHeight;
+    const profitTicks = getAxisTicks(profitAxis.minimum, profitAxis.maximum);
 
     return (
         <figure className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
@@ -58,18 +68,12 @@ export default function ScenarioComparisonChart({results}: ScenarioComparisonCha
                     viewBox={`0 0 ${chartWidth} 270`}
                 >
                     <title>保有年数ごとの総損益比較</title>
-                    <text x="20" y="16" fill="currentColor" fontSize="11">
-                        最大 {formatMan(maximumProfit)}
-                    </text>
-                    <line
-                        x1="20"
-                        x2={chartWidth - 20}
-                        y1={zeroY}
-                        y2={zeroY}
-                        stroke="currentColor"
-                        opacity="0.35"
+                    <ChartValueAxis
+                        ticks={profitTicks}
+                        yFor={yFor}
+                        plotLeft={plotLeft}
+                        plotRight={plotRight}
                     />
-                    <text x="20" y={zeroY - 5} fill="currentColor" fontSize="11">0</text>
                     {Array.from({length: yearCount}, (_, index) => {
                         const year = index + 1;
                         if (year % labelInterval !== 0 && year !== yearCount) {
@@ -78,7 +82,7 @@ export default function ScenarioComparisonChart({results}: ScenarioComparisonCha
                         return (
                             <text
                                 key={`year-label-${year}`}
-                                x={stepWidth * index + stepWidth / 2}
+                                x={plotLeft + stepWidth * index + stepWidth / 2}
                                 y="245"
                                 textAnchor="middle"
                                 fill="currentColor"
@@ -104,7 +108,7 @@ export default function ScenarioComparisonChart({results}: ScenarioComparisonCha
                                 }
                                 return;
                             }
-                            const centerX = stepWidth * index + stepWidth / 2;
+                            const centerX = plotLeft + stepWidth * index + stepWidth / 2;
                             currentSegment.push(`${centerX},${yFor(exit.totalProfitMan)}`);
                         });
                         if (currentSegment.length > 0) {
@@ -120,6 +124,7 @@ export default function ScenarioComparisonChart({results}: ScenarioComparisonCha
                                         fill="none"
                                         stroke={colors[scenarioId]}
                                         strokeWidth="3"
+                                        strokeDasharray={lineStyles[scenarioId]}
                                         strokeLinejoin="round"
                                         strokeLinecap="round"
                                     />
@@ -128,7 +133,7 @@ export default function ScenarioComparisonChart({results}: ScenarioComparisonCha
                                     if (exit.totalProfitMan === null) {
                                         return null;
                                     }
-                                    const centerX = stepWidth * index + stepWidth / 2;
+                                    const centerX = plotLeft + stepWidth * index + stepWidth / 2;
                                     return (
                                         <g key={`${scenarioId}-${exit.year}`}>
                                             <circle
@@ -148,9 +153,6 @@ export default function ScenarioComparisonChart({results}: ScenarioComparisonCha
                             </g>
                         );
                     })}
-                    <text x="20" y="233" fill="currentColor" fontSize="11">
-                        最小 {formatMan(minimumProfit)}
-                    </text>
                 </svg>
             </div>
             <div className="mt-2 flex flex-wrap gap-4 text-xs">
@@ -158,8 +160,11 @@ export default function ScenarioComparisonChart({results}: ScenarioComparisonCha
                     <span key={scenarioId} className="inline-flex items-center gap-2">
                         <span
                             aria-hidden="true"
-                            className="inline-block size-2.5 rounded-full"
-                            style={{backgroundColor: colors[scenarioId]}}
+                            className="inline-block w-5 border-t-2"
+                            style={{
+                                borderColor: colors[scenarioId],
+                                borderStyle: lineStyles[scenarioId] ? 'dashed' : 'solid',
+                            }}
                         />
                         {SCENARIO_LABELS[scenarioId]}
                     </span>

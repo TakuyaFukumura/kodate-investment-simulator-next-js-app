@@ -27,6 +27,7 @@ import {
 import WaterfallChart from './WaterfallChart';
 import ProjectionCharts from './ProjectionCharts';
 import ScenarioComparisonChart from './ScenarioComparisonChart';
+import {focusVisibleClassName, inputClassName} from './controlStyles';
 
 type InputValues = Record<InvestmentInputField, string>;
 type RepairEventValues = {
@@ -140,7 +141,39 @@ const inputMaximums: Partial<Record<InvestmentInputField, string>> = {
 
 const metricRows = ['NOI', '年間運営CF', '売却後手残り', '総損益', '単純損益率'] as const;
 
-const inputClassName = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 aria-[invalid=true]:border-red-500 dark:border-slate-600 dark:bg-slate-800';
+const annualTableHeadings = [
+    '満室想定家賃',
+    '空室損失',
+    '実効家賃',
+    '運営費',
+    'NOI',
+    '修繕費',
+    '元金返済',
+    '利息返済',
+    '年間返済額',
+    '年末残債',
+    '年次運営CF',
+    '累計運営CF',
+    'DSCR',
+    '売却価格',
+    '仲介手数料',
+    '印紙税',
+    'ローン完済手数料',
+    'その他売却費用',
+    '売却後手残り',
+    '総損益',
+    '単純損益率',
+] as const;
+
+const annualTableViews = [
+    {id: 'summary', label: '主要指標', columns: [4, 9, 10, 18, 19]},
+    {id: 'operations', label: '運営', columns: [0, 1, 2, 3, 4, 5, 10, 11]},
+    {id: 'financing', label: '融資', columns: [6, 7, 8, 9, 12]},
+    {id: 'sale', label: '売却', columns: [13, 14, 15, 16, 17, 18, 19, 20]},
+    {id: 'all', label: '全項目', columns: annualTableHeadings.map((_, index) => index)},
+] as const;
+type AnnualTableViewId = (typeof annualTableViews)[number]['id'];
+
 const cardClassName = 'rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6';
 
 function parseNumber(value: string): number {
@@ -406,6 +439,7 @@ export default function ScenarioWorkspace(
     const [holdingYears, setHoldingYears] = useState('30');
     const [selectedYear, setSelectedYear] = useState(30);
     const [activeCase, setActiveCase] = useState<ScenarioId>('baseline');
+    const [annualTableView, setAnnualTableView] = useState<AnnualTableViewId>('summary');
     const [importErrors, setImportErrors] = useState<string[]>([]);
     const [fileError, setFileError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -440,6 +474,20 @@ export default function ScenarioWorkspace(
     );
     const currentForm = cases[activeCase];
     const currentErrors = errorsByCase[activeCase];
+    const annualRentChangeError = getProjectionError(currentErrors, 'annualRentChangePercent');
+    const annualOperatingCostChangeError = getProjectionError(
+        currentErrors,
+        'annualOperatingCostChangePercent'
+    );
+    const visibleAnnualColumns = annualTableViews.find(({id}) => id === annualTableView)?.columns ??
+        annualTableViews[0].columns;
+    const annualTableMinWidth = {
+        summary: 'min-w-[880px]',
+        operations: 'min-w-[1500px]',
+        financing: 'min-w-[1050px]',
+        sale: 'min-w-[1500px]',
+        all: 'min-w-[2200px]',
+    }[annualTableView];
     const allErrors = SCENARIO_IDS.flatMap((scenarioId) =>
         getScenarioErrorSummary(scenarioId, cases[scenarioId], errorsByCase[scenarioId])
     );
@@ -639,7 +687,35 @@ export default function ScenarioWorkspace(
 
     return (
         <div className="space-y-6">
-            <section aria-labelledby="scenario-input-heading" className={cardClassName}>
+            <nav
+                aria-label="シミュレーションの手順"
+                className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
+            >
+                <ol className="flex flex-wrap gap-2">
+                    <li>
+                        <a
+                            href="#scenario-input"
+                            className={`inline-flex min-h-11 items-center rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 ${focusVisibleClassName}`}
+                        >
+                            1. 条件を設定
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="#comparison"
+                            className={`inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${focusVisibleClassName} dark:border-slate-600 dark:hover:bg-slate-800`}
+                        >
+                            2. 結果を比較
+                        </a>
+                    </li>
+                </ol>
+            </nav>
+
+            <section
+                id="scenario-input"
+                aria-labelledby="scenario-input-heading"
+                className={`${cardClassName} scroll-mt-24`}
+            >
                 <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
@@ -657,14 +733,14 @@ export default function ScenarioWorkspace(
                             type="button"
                             onClick={handleExportConditions}
                             disabled={!allCasesAreValid}
-                            className="rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950"
+                            className={`min-h-11 rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 ${focusVisibleClassName} dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950`}
                         >
                             条件JSONを出力
                         </button>
                         <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+                            className={`min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 ${focusVisibleClassName} dark:border-slate-600 dark:hover:bg-slate-800`}
                         >
                             条件JSONを取り込む
                         </button>
@@ -690,7 +766,7 @@ export default function ScenarioWorkspace(
                             aria-controls="scenario-panel"
                             onClick={() => setActiveCase(scenarioId)}
                             onKeyDown={handleCaseTabKeyDown}
-                            className={`rounded-lg px-4 py-2 text-sm font-semibold ${
+                            className={`min-h-11 rounded-lg px-4 py-2 text-sm font-semibold ${focusVisibleClassName} ${
                                 activeCase === scenarioId
                                     ? 'bg-emerald-700 text-white'
                                     : 'border border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:hover:bg-slate-800'
@@ -714,10 +790,13 @@ export default function ScenarioWorkspace(
                         value={holdingYears}
                         onChange={(event) => handleHoldingYearsChange(event.target.value)}
                         aria-invalid={Boolean(holdingYearsError)}
+                        aria-describedby={holdingYearsError ? 'shared-holding-years-error' : undefined}
                         className={inputClassName}
                     />
                     {holdingYearsError && (
-                        <p className="mt-1 text-xs text-red-700 dark:text-red-300">{holdingYearsError}</p>
+                        <p id="shared-holding-years-error" className="mt-1 text-xs text-red-700 dark:text-red-300">
+                            {holdingYearsError}
+                        </p>
                     )}
                 </div>
 
@@ -761,10 +840,14 @@ export default function ScenarioWorkspace(
                                         propertyName: event.target.value,
                                     }))}
                                     aria-invalid={Boolean(currentErrors.propertyName)}
+                                    aria-describedby={
+                                        currentErrors.propertyName ? `property-name-${activeCase}-error` : undefined
+                                    }
                                     className={inputClassName}
                                 />
                                 {currentErrors.propertyName && (
-                                    <p className="mt-1 text-xs text-red-700 dark:text-red-300">
+                                    <p id={`property-name-${activeCase}-error`}
+                                       className="mt-1 text-xs text-red-700 dark:text-red-300">
                                         {currentErrors.propertyName}
                                     </p>
                                 )}
@@ -808,10 +891,12 @@ export default function ScenarioWorkspace(
                                                 value={currentForm.inputValues[field]}
                                                 onChange={(event) => updateInputField(field, event.target.value)}
                                                 aria-invalid={Boolean(error)}
+                                                aria-describedby={error ? `${inputId}-error` : undefined}
                                                 className={inputClassName}
                                             />
                                             {error && (
-                                                <p className="mt-1 text-xs text-red-700 dark:text-red-300">{error}</p>
+                                                <p id={`${inputId}-error`}
+                                                   className="mt-1 text-xs text-red-700 dark:text-red-300">{error}</p>
                                             )}
                                         </div>
                                     );
@@ -841,12 +926,16 @@ export default function ScenarioWorkspace(
                                         ...form,
                                         annualRentChangePercent: event.target.value,
                                     }))}
-                                    aria-invalid={Boolean(getProjectionError(currentErrors, 'annualRentChangePercent'))}
+                                    aria-invalid={Boolean(annualRentChangeError)}
+                                    aria-describedby={
+                                        annualRentChangeError ? `rent-change-${activeCase}-error` : undefined
+                                    }
                                     className={inputClassName}
                                 />
-                                {getProjectionError(currentErrors, 'annualRentChangePercent') && (
-                                    <p className="mt-1 text-xs text-red-700 dark:text-red-300">
-                                        {getProjectionError(currentErrors, 'annualRentChangePercent')}
+                                {annualRentChangeError && (
+                                    <p id={`rent-change-${activeCase}-error`}
+                                       className="mt-1 text-xs text-red-700 dark:text-red-300">
+                                        {annualRentChangeError}
                                     </p>
                                 )}
                             </div>
@@ -866,12 +955,16 @@ export default function ScenarioWorkspace(
                                         ...form,
                                         annualOperatingCostChangePercent: event.target.value,
                                     }))}
-                                    aria-invalid={Boolean(getProjectionError(currentErrors, 'annualOperatingCostChangePercent'))}
+                                    aria-invalid={Boolean(annualOperatingCostChangeError)}
+                                    aria-describedby={
+                                        annualOperatingCostChangeError ? `cost-change-${activeCase}-error` : undefined
+                                    }
                                     className={inputClassName}
                                 />
-                                {getProjectionError(currentErrors, 'annualOperatingCostChangePercent') && (
-                                    <p className="mt-1 text-xs text-red-700 dark:text-red-300">
-                                        {getProjectionError(currentErrors, 'annualOperatingCostChangePercent')}
+                                {annualOperatingCostChangeError && (
+                                    <p id={`cost-change-${activeCase}-error`}
+                                       className="mt-1 text-xs text-red-700 dark:text-red-300">
+                                        {annualOperatingCostChangeError}
                                     </p>
                                 )}
                             </div>
@@ -900,7 +993,7 @@ export default function ScenarioWorkspace(
                                                     <button
                                                         type="button"
                                                         onClick={() => removeRepairEvent(repairEvent.id)}
-                                                        className="text-sm font-medium text-red-700 underline dark:text-red-300"
+                                                        className={`min-h-11 rounded px-2 text-sm font-medium text-red-700 underline ${focusVisibleClassName} dark:text-red-300`}
                                                     >
                                                         削除
                                                     </button>
@@ -926,10 +1019,14 @@ export default function ScenarioWorkspace(
                                                                 event.target.value
                                                             )}
                                                             aria-invalid={Boolean(yearError)}
+                                                            aria-describedby={
+                                                                yearError ? `repair-year-${activeCase}-${repairEvent.id}-error` : undefined
+                                                            }
                                                             className={inputClassName}
                                                         />
                                                         {yearError &&
-                                                            <p className="mt-1 text-xs text-red-700 dark:text-red-300">{yearError}</p>}
+                                                            <p id={`repair-year-${activeCase}-${repairEvent.id}-error`}
+                                                               className="mt-1 text-xs text-red-700 dark:text-red-300">{yearError}</p>}
                                                     </div>
                                                     <div>
                                                         <label
@@ -948,10 +1045,14 @@ export default function ScenarioWorkspace(
                                                                 event.target.value
                                                             )}
                                                             aria-invalid={Boolean(labelError)}
+                                                            aria-describedby={
+                                                                labelError ? `repair-label-${activeCase}-${repairEvent.id}-error` : undefined
+                                                            }
                                                             className={inputClassName}
                                                         />
                                                         {labelError &&
-                                                            <p className="mt-1 text-xs text-red-700 dark:text-red-300">{labelError}</p>}
+                                                            <p id={`repair-label-${activeCase}-${repairEvent.id}-error`}
+                                                               className="mt-1 text-xs text-red-700 dark:text-red-300">{labelError}</p>}
                                                     </div>
                                                     <div>
                                                         <label
@@ -972,10 +1073,14 @@ export default function ScenarioWorkspace(
                                                                 event.target.value
                                                             )}
                                                             aria-invalid={Boolean(amountError)}
+                                                            aria-describedby={
+                                                                amountError ? `repair-amount-${activeCase}-${repairEvent.id}-error` : undefined
+                                                            }
                                                             className={inputClassName}
                                                         />
                                                         {amountError &&
-                                                            <p className="mt-1 text-xs text-red-700 dark:text-red-300">{amountError}</p>}
+                                                            <p id={`repair-amount-${activeCase}-${repairEvent.id}-error`}
+                                                               className="mt-1 text-xs text-red-700 dark:text-red-300">{amountError}</p>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -986,7 +1091,7 @@ export default function ScenarioWorkspace(
                             <button
                                 type="button"
                                 onClick={addRepairEvent}
-                                className="rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950"
+                                className={`min-h-11 rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 ${focusVisibleClassName} dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950`}
                             >
                                 修繕予定を追加
                             </button>
@@ -1023,10 +1128,12 @@ export default function ScenarioWorkspace(
                                                 [field]: event.target.value,
                                             }))}
                                             aria-invalid={Boolean(error)}
+                                            aria-describedby={error ? `${inputId}-error` : undefined}
                                             className={inputClassName}
                                         />
                                         {error &&
-                                            <p className="mt-1 text-xs text-red-700 dark:text-red-300">{error}</p>}
+                                            <p id={`${inputId}-error`}
+                                               className="mt-1 text-xs text-red-700 dark:text-red-300">{error}</p>}
                                     </div>
                                 );
                             })}
@@ -1110,13 +1217,23 @@ export default function ScenarioWorkspace(
                 )}
             </section>
 
-            <section aria-labelledby="comparison-heading" className={`${cardClassName} space-y-6`}>
+            <section
+                id="comparison"
+                aria-labelledby="comparison-heading"
+                className={`${cardClassName} scroll-mt-24 space-y-6`}
+            >
                 <div className="flex flex-wrap items-end justify-between gap-4">
                     <div>
                         <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">比較結果</p>
                         <h2 id="comparison-heading" className="mt-1 text-xl font-bold">保有年数ごとの投資結果</h2>
                     </div>
                     <div className="flex flex-wrap items-end gap-3">
+                        <a
+                            href="#scenario-input"
+                            className={`inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 ${focusVisibleClassName} dark:border-slate-600 dark:hover:bg-slate-800`}
+                        >
+                            条件を編集
+                        </a>
                         <div>
                             <label htmlFor="comparison-year" className="mb-1 block text-sm font-medium">
                                 比較する保有年
@@ -1144,7 +1261,7 @@ export default function ScenarioWorkspace(
                             type="button"
                             onClick={handleExportResults}
                             disabled={!results}
-                            className="rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950"
+                            className={`min-h-11 rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 ${focusVisibleClassName} dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950`}
                         >
                             年次結果CSVを出力
                         </button>
@@ -1180,14 +1297,44 @@ export default function ScenarioWorkspace(
 
                         <div>
                             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-                                <h3 className="text-sm font-bold">年次運用・融資・売却詳細</h3>
+                                <h3 id="annual-detail-table-heading" className="text-sm font-bold">
+                                    年次運用・融資・売却詳細
+                                </h3>
                                 <p className="text-xs text-slate-600 dark:text-slate-300">
                                     金額：万円、率・DSCR：小数第2位まで
                                 </p>
                             </div>
-                            <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                            <div
+                                role="group"
+                                aria-label="年次詳細表の表示項目"
+                                className="mb-3 flex flex-wrap gap-2"
+                            >
+                                {annualTableViews.map(({id, label}) => (
+                                    <button
+                                        key={id}
+                                        type="button"
+                                        aria-pressed={annualTableView === id}
+                                        onClick={() => setAnnualTableView(id)}
+                                        className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold ${focusVisibleClassName} ${
+                                            annualTableView === id
+                                                ? 'bg-emerald-700 text-white'
+                                                : 'border border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="mb-2 text-xs text-slate-600 dark:text-slate-300">
+                                表示項目を切り替えられます。表は左右にスクロールできます。
+                            </p>
+                            <div
+                                tabIndex={0}
+                                aria-label="年次詳細表。左右にスクロールできます"
+                                className={`overflow-x-auto rounded-lg border border-slate-200 ${focusVisibleClassName} dark:border-slate-700`}
+                            >
                                 <table
-                                    className="min-w-[2200px] w-full border-collapse text-right text-xs tabular-nums">
+                                    className={`${annualTableMinWidth} w-full border-collapse text-right text-xs tabular-nums`}>
                                     <caption className="sr-only">
                                         基準・楽観・慎重ケースの年次運用・融資・売却詳細
                                     </caption>
@@ -1203,30 +1350,14 @@ export default function ScenarioWorkspace(
                                         <th scope="col"
                                             className="sticky left-[15rem] z-20 w-20 bg-slate-100 px-3 py-2 text-left dark:bg-slate-800">年
                                         </th>
-                                        {[
-                                            '満室想定家賃',
-                                            '空室損失',
-                                            '実効家賃',
-                                            '運営費',
-                                            'NOI',
-                                            '修繕費',
-                                            '元金返済',
-                                            '利息返済',
-                                            '年間返済額',
-                                            '年末残債',
-                                            '年次運営CF',
-                                            '累計運営CF',
-                                            'DSCR',
-                                            '売却価格',
-                                            '仲介手数料',
-                                            '印紙税',
-                                            'ローン完済手数料',
-                                            'その他売却費用',
-                                            '売却後手残り',
-                                            '総損益',
-                                            '単純損益率',
-                                        ].map((heading) => (
-                                            <th key={heading} scope="col" className="px-3 py-2">{heading}</th>
+                                        {visibleAnnualColumns.map((columnIndex) => (
+                                            <th
+                                                key={annualTableHeadings[columnIndex]}
+                                                scope="col"
+                                                className="px-3 py-2"
+                                            >
+                                                {annualTableHeadings[columnIndex]}
+                                            </th>
                                         ))}
                                     </tr>
                                     </thead>
@@ -1275,12 +1406,12 @@ export default function ScenarioWorkspace(
                                                     <td className="sticky left-[15rem] z-10 bg-white px-3 py-2 text-left dark:bg-slate-900">
                                                         {year}年
                                                     </td>
-                                                    {cells.map((cell, cellIndex) => (
+                                                    {visibleAnnualColumns.map((columnIndex) => (
                                                         <td
-                                                            key={`${result.id}-${year}-${cellIndex}`}
+                                                            key={`${result.id}-${year}-${annualTableHeadings[columnIndex]}`}
                                                             className="px-3 py-2"
                                                         >
-                                                            {cell}
+                                                            {cells[columnIndex]}
                                                         </td>
                                                     ))}
                                                 </tr>
