@@ -1,4 +1,4 @@
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import Home from '../../../src/app/page';
 import {PROPERTY_CSV_HEADERS} from '../../../src/lib/propertyCsv';
 
@@ -144,6 +144,36 @@ describe('Home', () => {
         });
 
         expect(screen.getAllByText('85.0').length).toBeGreaterThan(0);
+    });
+
+    it('条件と比較結果を相互に移動でき、年次表の表示項目を切り替えられる', async () => {
+        await renderHome();
+
+        expect(screen.getByRole('navigation', {name: 'シミュレーションの手順'})).toBeInTheDocument();
+        expect(screen.getByRole('link', {name: '2. 結果を比較'})).toHaveAttribute('href', '#comparison');
+        expect(screen.getByRole('link', {name: '条件を編集'})).toHaveAttribute('href', '#scenario-input');
+
+        enableAllCases();
+
+        const table = screen.getByRole('table', {
+            name: '基準・楽観・慎重ケースの年次運用・融資・売却詳細',
+        });
+        expect(within(table).getByRole('columnheader', {name: 'NOI'})).toBeInTheDocument();
+        expect(within(table).queryByRole('columnheader', {name: '満室想定家賃'})).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', {name: '全項目'}));
+        expect(within(table).getByRole('columnheader', {name: '満室想定家賃'})).toBeInTheDocument();
+        expect(within(table).getByRole('columnheader', {name: '単純損益率'})).toBeInTheDocument();
+    });
+
+    it('入力エラーを該当する入力欄に関連付ける', async () => {
+        await renderHome();
+
+        const capRate = screen.getByLabelText('想定売却利回り（%）');
+        expect(capRate).toHaveAttribute('aria-invalid', 'true');
+        expect(capRate).toHaveAttribute('aria-describedby', 'exit-baseline-capRatePercent-error');
+        expect(document.getElementById('exit-baseline-capRatePercent-error'))
+            .toHaveTextContent('想定売却利回りは0%より大きく100%以下で入力してください。');
     });
 
     it('ケース間で編集値を独立して保持し、保有期間は共通で使う', async () => {
