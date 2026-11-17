@@ -6,6 +6,7 @@ import type {ProjectionAssumptions, ProjectionValidationError,} from '../../lib/
 import {calculateProjection, validateProjectionAssumptions,} from '../../lib/projection';
 import ExitPanel from './ExitPanel';
 import ProjectionCharts from './ProjectionCharts';
+import {focusVisibleClassName, inputClassName} from './controlStyles';
 
 type RepairEventValues = {
     id: string;
@@ -18,8 +19,6 @@ type ProjectionPanelProps = Readonly<{
     baseInput: InvestmentInput;
     baseInputIsValid: boolean;
 }>;
-
-const inputClassName = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 aria-[invalid=true]:border-red-500 dark:border-slate-600 dark:bg-slate-800';
 
 function parseNumber(value: string): number {
     return value.trim() === '' ? Number.NaN : Number(value);
@@ -201,7 +200,7 @@ export default function ProjectionPanel({baseInput, baseInputIsValid}: Projectio
                                                 <button
                                                     type="button"
                                                     onClick={() => setRepairEvents((current) => current.filter(({id}) => id !== event.id))}
-                                                    className="text-sm font-medium text-red-700 underline underline-offset-2 dark:text-red-300"
+                                                    className={`min-h-11 rounded px-2 text-sm font-medium text-red-700 underline underline-offset-2 ${focusVisibleClassName} dark:text-red-300`}
                                                 >
                                                     修繕予定 {eventNumber} を削除
                                                 </button>
@@ -285,7 +284,7 @@ export default function ProjectionPanel({baseInput, baseInputIsValid}: Projectio
                                         },
                                     ]);
                                 }}
-                                className="rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950"
+                                className={`min-h-11 rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 ${focusVisibleClassName} dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950`}
                             >
                                 修繕予定を追加
                             </button>

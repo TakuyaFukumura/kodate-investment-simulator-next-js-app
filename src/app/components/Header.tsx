@@ -2,6 +2,7 @@
 
 import {useSyncExternalStore} from 'react';
 import {useDarkMode} from './DarkModeProvider';
+import {focusVisibleClassName} from './controlStyles';
 
 const emptySubscribe = () => () => {
 };
@@ -45,10 +46,9 @@ export default function Header() {
                             onClick={handleThemeToggle}
                             aria-label="ダークモード"
                             aria-pressed={displayTheme === 'dark'}
-                            className="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium
+                            className={`flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium
                             text-slate-700 transition-colors duration-200 hover:bg-slate-100
-                            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700
-                            dark:text-slate-300 dark:hover:bg-slate-800"
+                            ${focusVisibleClassName} dark:text-slate-300 dark:hover:bg-slate-800`}
                             title={`現在: ${displayTheme === 'light' ? 'ライトモード' : 'ダークモード'}`}
                         >
                             <span aria-hidden="true" className="text-lg">{getThemeIcon()}</span>

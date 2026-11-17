@@ -27,6 +27,7 @@ import {
 import WaterfallChart from './WaterfallChart';
 import ProjectionCharts from './ProjectionCharts';
 import ScenarioComparisonChart from './ScenarioComparisonChart';
+import {focusVisibleClassName, inputClassName} from './controlStyles';
 
 type InputValues = Record<InvestmentInputField, string>;
 type RepairEventValues = {
@@ -173,7 +174,6 @@ const annualTableViews = [
 ] as const;
 type AnnualTableViewId = (typeof annualTableViews)[number]['id'];
 
-const inputClassName = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 aria-[invalid=true]:border-red-500 dark:border-slate-600 dark:bg-slate-800';
 const cardClassName = 'rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6';
 
 function parseNumber(value: string): number {
@@ -695,7 +695,7 @@ export default function ScenarioWorkspace(
                     <li>
                         <a
                             href="#scenario-input"
-                            className="inline-flex min-h-11 items-center rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+                            className={`inline-flex min-h-11 items-center rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 ${focusVisibleClassName}`}
                         >
                             1. 条件を設定
                         </a>
@@ -703,7 +703,7 @@ export default function ScenarioWorkspace(
                     <li>
                         <a
                             href="#comparison"
-                            className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 dark:border-slate-600 dark:hover:bg-slate-800"
+                            className={`inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${focusVisibleClassName} dark:border-slate-600 dark:hover:bg-slate-800`}
                         >
                             2. 結果を比較
                         </a>
@@ -733,14 +733,14 @@ export default function ScenarioWorkspace(
                             type="button"
                             onClick={handleExportConditions}
                             disabled={!allCasesAreValid}
-                            className="rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950"
+                            className={`min-h-11 rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 ${focusVisibleClassName} dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950`}
                         >
                             条件JSONを出力
                         </button>
                         <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+                            className={`min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 ${focusVisibleClassName} dark:border-slate-600 dark:hover:bg-slate-800`}
                         >
                             条件JSONを取り込む
                         </button>
@@ -766,7 +766,7 @@ export default function ScenarioWorkspace(
                             aria-controls="scenario-panel"
                             onClick={() => setActiveCase(scenarioId)}
                             onKeyDown={handleCaseTabKeyDown}
-                            className={`rounded-lg px-4 py-2 text-sm font-semibold ${
+                            className={`min-h-11 rounded-lg px-4 py-2 text-sm font-semibold ${focusVisibleClassName} ${
                                 activeCase === scenarioId
                                     ? 'bg-emerald-700 text-white'
                                     : 'border border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:hover:bg-slate-800'
@@ -993,7 +993,7 @@ export default function ScenarioWorkspace(
                                                     <button
                                                         type="button"
                                                         onClick={() => removeRepairEvent(repairEvent.id)}
-                                                        className="text-sm font-medium text-red-700 underline dark:text-red-300"
+                                                        className={`min-h-11 rounded px-2 text-sm font-medium text-red-700 underline ${focusVisibleClassName} dark:text-red-300`}
                                                     >
                                                         削除
                                                     </button>
@@ -1091,7 +1091,7 @@ export default function ScenarioWorkspace(
                             <button
                                 type="button"
                                 onClick={addRepairEvent}
-                                className="rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950"
+                                className={`min-h-11 rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 ${focusVisibleClassName} dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950`}
                             >
                                 修繕予定を追加
                             </button>
@@ -1230,7 +1230,7 @@ export default function ScenarioWorkspace(
                     <div className="flex flex-wrap items-end gap-3">
                         <a
                             href="#scenario-input"
-                            className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 dark:border-slate-600 dark:hover:bg-slate-800"
+                            className={`inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 ${focusVisibleClassName} dark:border-slate-600 dark:hover:bg-slate-800`}
                         >
                             条件を編集
                         </a>
@@ -1261,7 +1261,7 @@ export default function ScenarioWorkspace(
                             type="button"
                             onClick={handleExportResults}
                             disabled={!results}
-                            className="rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950"
+                            className={`min-h-11 rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 ${focusVisibleClassName} dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950`}
                         >
                             年次結果CSVを出力
                         </button>
@@ -1315,7 +1315,7 @@ export default function ScenarioWorkspace(
                                         type="button"
                                         aria-pressed={annualTableView === id}
                                         onClick={() => setAnnualTableView(id)}
-                                        className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${
+                                        className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold ${focusVisibleClassName} ${
                                             annualTableView === id
                                                 ? 'bg-emerald-700 text-white'
                                                 : 'border border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800'
@@ -1331,7 +1331,7 @@ export default function ScenarioWorkspace(
                             <div
                                 tabIndex={0}
                                 aria-label="年次詳細表。左右にスクロールできます"
-                                className="overflow-x-auto rounded-lg border border-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 dark:border-slate-700"
+                                className={`overflow-x-auto rounded-lg border border-slate-200 ${focusVisibleClassName} dark:border-slate-700`}
                             >
                                 <table
                                     className={`${annualTableMinWidth} w-full border-collapse text-right text-xs tabular-nums`}>
