@@ -49,6 +49,8 @@ describe('ExitPanel', () => {
         expect(screen.queryByRole('table')).not.toBeInTheDocument();
         expect(screen.getByText('想定売却利回りは0%より大きく100%以下で入力してください。'))
             .toBeInTheDocument();
+        expect(screen.getByLabelText('想定売却利回り（%）'))
+            .toHaveAttribute('aria-describedby', 'exit-cap-rate-error');
 
         fireEvent.change(screen.getByLabelText('想定売却利回り（%）'), {target: {value: '10'}});
         fireEvent.change(screen.getByLabelText('印紙税（万円）'), {target: {value: '1'}});

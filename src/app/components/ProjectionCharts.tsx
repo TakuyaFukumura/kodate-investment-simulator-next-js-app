@@ -1,4 +1,5 @@
 import type {AnnualProjection} from '../../lib/projection';
+import {ChartValueAxis, getAxisRange, getAxisTicks} from './ChartAxis';
 
 type ProjectionChartsProps = Readonly<{
     years: AnnualProjection[];
@@ -8,6 +9,9 @@ const plotTop = 24;
 const plotBottom = 218;
 const plotHeight = plotBottom - plotTop;
 const chartWidth = 800;
+const plotLeft = 60;
+const plotRight = chartWidth - 20;
+const plotWidth = plotRight - plotLeft;
 
 const formatMan = (amount: number) => amount.toLocaleString('ja-JP', {
     minimumFractionDigits: 1,
@@ -21,17 +25,23 @@ function getYearLabelInterval(yearCount: number): number {
 export default function ProjectionCharts({years}: ProjectionChartsProps) {
     const minCashFlow = Math.min(0, ...years.map(({cashFlowMan}) => cashFlowMan));
     const maxCashFlow = Math.max(0, ...years.map(({cashFlowMan}) => cashFlowMan));
-    const cashFlowRange = maxCashFlow - minCashFlow || 1;
-    const zeroY = plotTop + (maxCashFlow / cashFlowRange) * plotHeight;
-    const stepWidth = chartWidth / years.length;
+    const cashFlowAxis = getAxisRange(minCashFlow, maxCashFlow);
+    const cashFlowRange = cashFlowAxis.maximum - cashFlowAxis.minimum;
+    const stepWidth = plotWidth / years.length;
     const barWidth = Math.min(28, stepWidth * 0.65);
     const cashFlowY = (value: number) =>
-        plotTop + ((maxCashFlow - value) / cashFlowRange) * plotHeight;
+        plotTop + ((cashFlowAxis.maximum - value) / cashFlowRange) * plotHeight;
+    const zeroY = cashFlowY(0);
+    const cashFlowTicks = getAxisTicks(cashFlowAxis.minimum, cashFlowAxis.maximum);
     const loanBalanceMax = Math.max(1, ...years.map(({remainingLoanBalanceMan}) => remainingLoanBalanceMan));
-    const loanBalanceY = (value: number) => plotBottom - (value / loanBalanceMax) * plotHeight;
+    const loanBalanceAxis = getAxisRange(0, loanBalanceMax);
+    const loanBalanceRange = loanBalanceAxis.maximum - loanBalanceAxis.minimum;
+    const loanBalanceY = (value: number) =>
+        plotBottom - ((value - loanBalanceAxis.minimum) / loanBalanceRange) * plotHeight;
+    const loanBalanceTicks = getAxisTicks(loanBalanceAxis.minimum, loanBalanceAxis.maximum);
     const labelInterval = getYearLabelInterval(years.length);
     const linePoints = years.map((item, index) => (
-        `${(stepWidth * index) + stepWidth / 2},${loanBalanceY(item.remainingLoanBalanceMan)}`
+        `${plotLeft + (stepWidth * index) + stepWidth / 2},${loanBalanceY(item.remainingLoanBalanceMan)}`
     )).join(' ');
 
     return (
@@ -46,13 +56,14 @@ export default function ProjectionCharts({years}: ProjectionChartsProps) {
                         viewBox={`0 0 ${chartWidth} 270`}
                     >
                         <title>年次税引前キャッシュフロー</title>
-                        <text x="20" y="16" fill="currentColor" fontSize="11">
-                            最大 {formatMan(maxCashFlow)}
-                        </text>
-                        <line x1="20" x2={chartWidth - 20} y1={zeroY} y2={zeroY} stroke="currentColor" opacity="0.35"/>
-                        <text x="20" y={zeroY - 5} fill="currentColor" fontSize="11">0</text>
+                        <ChartValueAxis
+                            ticks={cashFlowTicks}
+                            yFor={cashFlowY}
+                            plotLeft={plotLeft}
+                            plotRight={plotRight}
+                        />
                         {years.map((item, index) => {
-                            const centerX = stepWidth * index + stepWidth / 2;
+                            const centerX = plotLeft + stepWidth * index + stepWidth / 2;
                             const valueY = cashFlowY(item.cashFlowMan);
                             const top = Math.min(zeroY, valueY);
                             const height = Math.max(1, Math.abs(zeroY - valueY));
@@ -83,9 +94,6 @@ export default function ProjectionCharts({years}: ProjectionChartsProps) {
                                 </g>
                             );
                         })}
-                        <text x="20" y="233" fill="currentColor" fontSize="11">
-                            最小 {formatMan(minCashFlow)}
-                        </text>
                     </svg>
                 </div>
                 <figcaption className="mt-2 text-xs text-slate-600 dark:text-slate-300">
@@ -103,12 +111,12 @@ export default function ProjectionCharts({years}: ProjectionChartsProps) {
                         viewBox={`0 0 ${chartWidth} 270`}
                     >
                         <title>年末ローン残債</title>
-                        <text x="20" y="16" fill="currentColor" fontSize="11">
-                            最大 {formatMan(loanBalanceMax)}
-                        </text>
-                        <line x1="20" x2={chartWidth - 20} y1={plotBottom} y2={plotBottom} stroke="currentColor"
-                              opacity="0.35"/>
-                        <text x="20" y={plotBottom - 5} fill="currentColor" fontSize="11">0</text>
+                        <ChartValueAxis
+                            ticks={loanBalanceTicks}
+                            yFor={loanBalanceY}
+                            plotLeft={plotLeft}
+                            plotRight={plotRight}
+                        />
                         <polyline
                             points={linePoints}
                             fill="none"
@@ -118,7 +126,7 @@ export default function ProjectionCharts({years}: ProjectionChartsProps) {
                             strokeLinecap="round"
                         />
                         {years.map((item, index) => {
-                            const centerX = stepWidth * index + stepWidth / 2;
+                            const centerX = plotLeft + stepWidth * index + stepWidth / 2;
 
                             return (
                                 <g key={item.year}>

@@ -109,10 +109,16 @@ export default function ProjectionPanel({baseInput, baseInputIsValid}: Projectio
                                     value={holdingYears}
                                     onChange={(event) => setHoldingYears(event.target.value)}
                                     aria-invalid={Boolean(getFieldError('holdingYears'))}
+                                    aria-describedby={
+                                        getFieldError('holdingYears') ? 'projection-holding-years-error' : undefined
+                                    }
                                     className={inputClassName}
                                 />
                                 {getFieldError('holdingYears') && (
-                                    <p className="mt-1 text-xs text-red-700 dark:text-red-300">{getFieldError('holdingYears')}</p>
+                                    <p id="projection-holding-years-error"
+                                       className="mt-1 text-xs text-red-700 dark:text-red-300">
+                                        {getFieldError('holdingYears')}
+                                    </p>
                                 )}
                             </div>
                             <div>
@@ -128,10 +134,18 @@ export default function ProjectionPanel({baseInput, baseInputIsValid}: Projectio
                                     value={annualRentChangePercent}
                                     onChange={(event) => setAnnualRentChangePercent(event.target.value)}
                                     aria-invalid={Boolean(getFieldError('annualRentChangePercent'))}
+                                    aria-describedby={
+                                        getFieldError('annualRentChangePercent')
+                                            ? 'projection-rent-change-error'
+                                            : undefined
+                                    }
                                     className={inputClassName}
                                 />
                                 {getFieldError('annualRentChangePercent') && (
-                                    <p className="mt-1 text-xs text-red-700 dark:text-red-300">{getFieldError('annualRentChangePercent')}</p>
+                                    <p id="projection-rent-change-error"
+                                       className="mt-1 text-xs text-red-700 dark:text-red-300">
+                                        {getFieldError('annualRentChangePercent')}
+                                    </p>
                                 )}
                             </div>
                             <div>
@@ -147,10 +161,18 @@ export default function ProjectionPanel({baseInput, baseInputIsValid}: Projectio
                                     value={annualOperatingCostChangePercent}
                                     onChange={(event) => setAnnualOperatingCostChangePercent(event.target.value)}
                                     aria-invalid={Boolean(getFieldError('annualOperatingCostChangePercent'))}
+                                    aria-describedby={
+                                        getFieldError('annualOperatingCostChangePercent')
+                                            ? 'projection-cost-change-error'
+                                            : undefined
+                                    }
                                     className={inputClassName}
                                 />
                                 {getFieldError('annualOperatingCostChangePercent') && (
-                                    <p className="mt-1 text-xs text-red-700 dark:text-red-300">{getFieldError('annualOperatingCostChangePercent')}</p>
+                                    <p id="projection-cost-change-error"
+                                       className="mt-1 text-xs text-red-700 dark:text-red-300">
+                                        {getFieldError('annualOperatingCostChangePercent')}
+                                    </p>
                                 )}
                             </div>
                         </fieldset>
@@ -198,10 +220,12 @@ export default function ProjectionPanel({baseInput, baseInputIsValid}: Projectio
                                                     value={event.year}
                                                     onChange={(change) => updateRepairEvent(event.id, 'year', change.target.value)}
                                                     aria-invalid={Boolean(yearError)}
+                                                    aria-describedby={yearError ? `repair-year-${event.id}-error` : undefined}
                                                     className={inputClassName}
                                                 />
                                                 {yearError &&
-                                                    <p className="mt-1 text-xs text-red-700 dark:text-red-300">{yearError}</p>}
+                                                    <p id={`repair-year-${event.id}-error`}
+                                                       className="mt-1 text-xs text-red-700 dark:text-red-300">{yearError}</p>}
                                             </div>
                                             <div>
                                                 <label htmlFor={`repair-label-${event.id}`}
@@ -214,10 +238,12 @@ export default function ProjectionPanel({baseInput, baseInputIsValid}: Projectio
                                                     value={event.label}
                                                     onChange={(change) => updateRepairEvent(event.id, 'label', change.target.value)}
                                                     aria-invalid={Boolean(labelError)}
+                                                    aria-describedby={labelError ? `repair-label-${event.id}-error` : undefined}
                                                     className={inputClassName}
                                                 />
                                                 {labelError &&
-                                                    <p className="mt-1 text-xs text-red-700 dark:text-red-300">{labelError}</p>}
+                                                    <p id={`repair-label-${event.id}-error`}
+                                                       className="mt-1 text-xs text-red-700 dark:text-red-300">{labelError}</p>}
                                             </div>
                                             <div>
                                                 <label htmlFor={`repair-amount-${event.id}`}
@@ -232,10 +258,14 @@ export default function ProjectionPanel({baseInput, baseInputIsValid}: Projectio
                                                     value={event.amountMan}
                                                     onChange={(change) => updateRepairEvent(event.id, 'amountMan', change.target.value)}
                                                     aria-invalid={Boolean(amountError)}
+                                                    aria-describedby={
+                                                        amountError ? `repair-amount-${event.id}-error` : undefined
+                                                    }
                                                     className={inputClassName}
                                                 />
                                                 {amountError &&
-                                                    <p className="mt-1 text-xs text-red-700 dark:text-red-300">{amountError}</p>}
+                                                    <p id={`repair-amount-${event.id}-error`}
+                                                       className="mt-1 text-xs text-red-700 dark:text-red-300">{amountError}</p>}
                                             </div>
                                         </div>
                                     );
